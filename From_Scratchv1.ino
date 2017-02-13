@@ -27,8 +27,7 @@ void setup() {
   
   CommsInit(); // Initializes Serial and SPI communication Protocals
   CreateFile(); // Creates files in SD Card
-
-}
+  }
 
 void loop() {
   // nothing happens after setup finishes.
@@ -80,8 +79,8 @@ void CommsInit() {
 }
 void ReadUID() {
   //Stopping SD Card in readiness for RFID initialization
-  pinMode(SD_CS, OUTPUT);
-  digitalWrite(SD_CS, HIGH);
+//  pinMode(SD_CS, OUTPUT);
+//  digitalWrite(SD_CS, HIGH);
   pinMode (SD_POWER, OUTPUT);
   digitalWrite(SD_POWER, HIGH);
   // Getting ready for Reading Tags/Cards
@@ -93,7 +92,7 @@ void ReadUID() {
   }
   // Assuming Tags have 4 byte UID, others may have 7 (Reminder)
   Serial.println(F("Scanned Access Tag Unique ID:"));
-  for (int i = 0; i < 4; i++) {  //
+  for (int i = 0; i < 4; i++) {
     readCard[i] = rfid.uid.uidByte[i];
     Serial.print(readCard[i], HEX);
   }
@@ -102,20 +101,28 @@ void ReadUID() {
   return 1; 
 }
 void WriteMaster() {
-       ReadUID();
-       myFile = SD.open("Master.txt", FILE_WRITE);
-       for (uint8_t i=0; i<3; i++) {
-        myFile.print(readCard[i]);
-       }
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(SD_CS, LOW);
+  pinMode(SD_POWER, OUTPUT);
+  digitalWrite(SD_POWER, LOW);
+  if (!SD.begin(SD_CS)) {
+    SD.begin(SD_CS);
+    Serial.println("For debugging SD broken link");
+  }
+        myFile = SD.open("Master.txt", FILE_WRITE);
+       myFile.print(readCard[0]);
+       myFile.print(readCard[1]);
+       myFile.print(readCard[2]);
+       myFile.print(readCard[3]);
        myFile.print(",");
        myFile.close();
-       Serial.println("Writing to Master File done."); 
+       Serial.println("Writing to Ordinary File done."); 
 }
+
 void WriteOrdinary() {
-      ReadUID();
        myFile = SD.open("Ordinary.txt", FILE_WRITE);
        for (uint8_t i=0; i<3; i++) {
-        myFile.print(readCard[i]);
+        myFile.print("readCard"[i]);
        }
        myFile.print(",");
        myFile.close();
