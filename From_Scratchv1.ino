@@ -124,10 +124,11 @@ void WriteOrdinary() {
        myFile.close();
        Serial.println("Writing to Ordinary File done."); 
 }
-void _masterReadSDFiles(){
-   if (!SD.begin(SD_CS_PIN)) {
+
+int _masterReadSDFiles(){
+   while (!SD.begin(SD_CS_PIN)) {
     Serial.println("An Error occured while Initializing SD Card");
-    return;
+   // return;
   }
   
     String _masterRead;
@@ -140,21 +141,55 @@ void _masterReadSDFiles(){
 
     //Compare
 
-    for(int i = 0; i <= _masterRead.length();i++){
+        for(int i = 0; i <= _masterRead.length();i++){
 
-      if(_masterRead.substring(i,i+1) == ","){ // , is the delimiter
-        _masterReadData = _masterRead.lastIndexOf("RFID") // USE RFID Concat Code,Make global Var
-      }
-    }
-    if(_masterReadData ==1){
-      //Enter Programming Mode
+          if(_masterRead.substring(i,i+1) == ","){ // , is the delimiter
+            _masterReadData = _masterRead.lastIndexOf("RFID") // USE RFID Concat Code,Make global Var
+          }
+        }
+          if(_masterReadData ==1){
+            //Enter Programming Mode
 
-    }else{
-      //Reject Card()
-    }
+            return 1;
 
+          }else{
+            //Reject Card()
+          }
+          myFile.close();
+          break; //Exit
   }
+}
 
+//Ordinary File
+int _ordinaryReadSDFiles(){
+   while (!SD.begin(SD_CS_PIN)) {
+    Serial.println("An Error occured while Initializing SD Card");
+  }
+  
+    String _ordinaryRead;
+    int _ordinaryReadData;
 
+  myFile = SD.open("Ordinary.txt");
+  while(myFile.availabel()){
+
+     _ordinaryRead = myFile.read();
+
+    //Compare
+
+        for(int i = 0; i <= _ordinaryRead.length();i++){
+
+          if( _ordinaryRead.substring(i,i+1) == ","){ // , is the delimiter
+            _ordinaryReadData = _ordinaryRead.lastIndexOf("RFID") // USE RFID Concat Code,Make global Var
+          }
+        }
+          if(_ordinaryReadData == 1){
+            //Authorize()
+            return 0;
+          }else{
+            //Reject Card()
+          }
+          myFile.close();
+          break;
+  }
 
 }
