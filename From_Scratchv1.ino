@@ -28,6 +28,7 @@ void setup() {
   CommsInit(); // Initializes Serial and SPI communication Protocals
   CreateFile(); // Creates files in SD Card
 
+
 }
 
 void loop() {
@@ -75,7 +76,9 @@ void CommsInit() {
   Serial.begin(9600);
   SPI.begin();
   while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
+    
+  SysCall :: yield();
+     // wait for serial port to connect. Needed for native USB port only
   }
 }
 void ReadUID() {
@@ -121,4 +124,11 @@ void WriteOrdinary() {
        myFile.close();
        Serial.println("Writing to Ordinary File done."); 
 }
+void ReadSDFiles(){
+   if (!SD.begin(SD_CS_PIN)) {
+    Serial.println("An Error Ocuured while Initializing SD Card");
+    return;
+  }
 
+  
+}
