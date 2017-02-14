@@ -254,10 +254,10 @@ void cardType(){
 
          for(int i = 0 ; i <_masterRead.length();i++){
            if(_masterRead.substring(i ,i+1) == ","){
-              _UIDAvailable = _masterRead.lastIndexOf("RFUID");
+              _UIDAvailable = _masterRead.lastIndexOf(UID_string);
            }
          }
-         if(_UIDAvailable == 1){
+         if(_UIDAvailable != -1){
            IsMaster = true;
          }
        }else if(ordinaryFile.available()){
@@ -265,7 +265,7 @@ void cardType(){
 
         for(int i = 0;i<_ordinaryRead.length();i++){
           if(_ordinaryRead.substring(i,i+1) == ","){ //Use delimiter to find UID Text
-            _UIDAvailable =_ordinaryRead.lastIndexOf("RFID");
+            _UIDAvailable =_ordinaryRead.lastIndexOf(UID_string);
           }
         }
         if(_UIDAvailable == 1){
