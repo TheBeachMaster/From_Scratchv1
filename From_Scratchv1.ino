@@ -133,10 +133,33 @@ void WriteMaster() {
   // if the file opened okay, write to it:
   if (myFile) {
     Serial.print("Writing to Master.txt...");
-    myFile.print(readCard[0]);
-    myFile.print(readCard[1]);
-    myFile.print(readCard[2]);
-    myFile.print(readCard[3]);
+
+    // myFile.print(readCard[0]);
+    // myFile.print(readCard[1]);
+    // myFile.print(readCard[2]);
+    // myFile.print(readCard[3]);
+
+      unsigned long UID_unsigned;
+      UID_unsigned =  mfrc522.uid.uidByte[0] << 24;
+      UID_unsigned += mfrc522.uid.uidByte[1] << 16;
+      UID_unsigned += mfrc522.uid.uidByte[2] <<  8;
+      UID_unsigned += mfrc522.uid.uidByte[3];
+
+      // Serial.println();
+      // Serial.println("UID Unsigned int"); 
+      // Serial.println(UID_unsigned);
+
+      String UID_string =  (String)UID_unsigned;
+      long UID_LONG=(long)UID_unsigned;
+
+      // Serial.println("UID Long :");
+      // Serial.println(UID_LONG);
+
+      // Serial.println("UID String :");
+      // Serial.println(UID_string);
+
+      myFile.print(UID_string);
+
     myFile.print(",");
     // close the file:
     myFile.close();
@@ -163,10 +186,41 @@ void WriteOrdinary() {
   // if the file opened okay, write to it:
   if (myFile) {
     Serial.print("Writing to Ordinary.txt...");
-    myFile.print(readCard[0]);
-    myFile.print(readCard[1]);
-    myFile.print(readCard[2]);
-    myFile.print(readCard[3]);
+
+    /*
+    We can use thios code to store the variable we want to write to SD Card
+
+    This will generate a String which will be dumped in to the Text file and later on used
+    to perform a search query
+    */
+
+
+      unsigned long UID_unsigned;
+      UID_unsigned =  mfrc522.uid.uidByte[0] << 24;
+      UID_unsigned += mfrc522.uid.uidByte[1] << 16;
+      UID_unsigned += mfrc522.uid.uidByte[2] <<  8;
+      UID_unsigned += mfrc522.uid.uidByte[3];
+
+        // Serial.println();
+        // Serial.println("UID Unsigned int"); 
+        // Serial.println(UID_unsigned);
+
+      String UID_string =  (String)UID_unsigned;
+      long UID_LONG=(long)UID_unsigned;
+
+      // Serial.println("UID Long :");
+      // Serial.println(UID_LONG);
+
+      // Serial.println("UID String :");
+      // Serial.println(UID_string);    
+
+    // myFile.print(readCard[0]);
+    // myFile.print(readCard[1]);
+    // myFile.print(readCard[2]);
+    // myFile.print(readCard[3]);
+
+    myFile.print(UID_string);//Prints the UID Card in String Format
+
     myFile.print(",");
     // close the file:
     myFile.close();
