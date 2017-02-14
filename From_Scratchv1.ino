@@ -16,7 +16,7 @@
 #define SD_POWER 7
 
 MFRC522 rfid(RFID_SS, RFID_RST);
-LiquidCrystal_I2C lcd(0x27, 20, 4);
+LiquidCrystal_I2C lcd(0x27, 16, 4);
 
 void CommsInit();
 void LCDInit();
@@ -33,7 +33,7 @@ byte readCard[4]; // Array to store UID of a Single Tag temporarily
 void setup() {
 
   CommsInit(); // Initializes Serial and SPI communication Protocals
-  LCDInit();
+  LCDInit(); // Initializes LCD and prints out initial message
   CreateFile(); // Creates files in SD Card
 
 }
@@ -46,8 +46,7 @@ void CreateFile() {
   pinMode(SD_POWER, OUTPUT);
   digitalWrite(SD_POWER, LOW);
   Serial.println("Initializing SD card...");
-  lcd.print("SD card init...");
-  if (!SD.begin(SD_CS)) {
+   if (!SD.begin(SD_CS)) {
     Serial.println("initialization failed!");
     return;
   }
@@ -122,7 +121,7 @@ void WriteMaster() {
   if (!SD.begin(SD_CS)) {
     SD.begin(SD_CS);
     Serial.println("initialization done.");
-  }
+  
   myFile = SD.open("Master.txt", FILE_WRITE);
 
   // if the file opened okay, write to it:
@@ -140,6 +139,7 @@ void WriteMaster() {
     // if the file didn't open, print an error:
     Serial.println("error opening Master.txt");
   }
+}
 }
 
 void WriteOrdinary() {
@@ -177,29 +177,21 @@ boolean IsMaster() {
 void LCDInit () {
   lcd.init();                      // initialize the lcd
   lcd.init();
-  // Print a message to the LCD.
   lcd.backlight();
-
+  // Print a message to the LCD.
   lcd.setCursor(1, 0);
   lcd.print("Marafique Lift");
-  lcd.setCursor(-1, 1);
+  lcd.setCursor(0, 1);
   lcd.print("System  Booting!");
   lcd.setCursor(-3, 2);
   lcd.print("Please Wait...");
   lcd.setCursor(-2, 3);
   lcd.print("KASP3R TECH!");
 }
+void MainLoop() {
+  // RFID scans Tag
+  // UID is passed to IsMaster Function that determines whether to invoke program mode( Function Program Mode) or access mode (Function Access Mode)
+  // In Program Mode; Grep Function checks if UID is available in Master.txt. If so, any tag scanned is stored in Ordinary.txt using WriteOrdinary function.
+  // If Master is scanned again, program exits program mode into Access Mode(Default Mode)
+}
 
-
-
-<<<<<<< HEAD
-
-//Generic Reac Card Function
-
-
-
-////We've been able to Create and Write to Files but can not tell the program to jump into
-////Code that will allow it to check for UIDs
-////Let me know how this code will be structured
-=======
->>>>>>> 205ce5d0873167080d2e386efb95cdc19fbe1b36
