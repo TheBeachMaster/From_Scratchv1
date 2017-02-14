@@ -25,7 +25,8 @@ void CreateFile();
 void ReadUID();
 void WriteMaster(); // Writes UID to Master File in SD card
 void WriteOrdinary(); // Writes UID to Ordinary File in SD card
-boolean IsMaster(); // Returns true if Scanned Tag's UID is found in Master File
+boolean IsMaster =  false; // Returns true if Scanned Tag's UID is found in Master File
+boolean IsOrdinary = false; //Set to true if file is not from Master file
 
 File myFile;
 byte readCard[4]; // Array to store UID of a Single Tag temporarily
@@ -171,8 +172,53 @@ void WriteOrdinary() {
     Serial.println("error opening Ordinary.txt");
   }
 }
-boolean IsMaster() {
-  //Grep Function here!
+void cardType(){  
+  //Replaced the Booloean Func with void Func
+  //Variables declared are IsMaster and IsOrdinary
+
+//Initialize SD Card 
+      if (!SD.begin(SD_CS_PIN)) 
+      {
+          Serial.println("An Error Ocuured while Initializing SD Card");
+           return;
+      }	
+      	else{
+        //Code Logic ---If the SD Card is not initialized,Exit Code with an Error,else set up files for reading
+        //Local Variables only
+       File masterFile = SD.open("Master.txt");
+       File ordinaryFile = SD.open("Ordinary.txt");
+       
+       int _UIDAvailable = 0 ;//This variable helps us in identifying how many times a  particular UID item appears on the master file
+      
+       //Open Master File for Reading
+       if(masterFile.available()){
+         String _masterRead = masterFile.read(); //We're assuming we're reading Strings from the Master File 
+
+         for(int i = 0 ; i <_masterRead.length();i++){
+           if(_masterRead.substring(i ,i+1) == ","){
+              _UIDAvailable = _masterRead.lastIndexOf("RFUID");
+           }
+         }
+         if(_UIDAvailable == 1){
+           IsMaster = true;
+         }
+       }else if(ordinaryFile.available()){
+        String _ordinaryRead = ordinaryFile.read();
+
+        for(int i = 0;i<_ordinaryRead.length();i++){
+          if(_ordinaryRead.substring(i,i+1) == ","){ //Use delimiter to find UID Text
+            _UIDAvailable =_ordinaryRead.lastIndexOf("RFID");
+          }
+        }
+        if(_UIDAvailable == 1){
+          IsOrdinary = true;
+        }
+       }
+
+      }    
+
+
+
 }
 void LCDInit () {
   lcd.init();                      // initialize the lcd
