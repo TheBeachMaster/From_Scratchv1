@@ -104,11 +104,14 @@ void ReadUID() {
     Serial.print(readCard[i], HEX);
   }
   Serial.println("");
-  IsMaster();
+  //Invoke CardType Func to check the Access CardType
+  cardType();
   if (IsMaster) {
     WriteMaster();
-  } else {
+  } else if(IsOrdinary) {
     WriteOrdinary();
+  }else{
+    //Reject
   }
   rfid.PICC_HaltA(); // Stop reading
   return 1;
