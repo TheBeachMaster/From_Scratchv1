@@ -195,6 +195,11 @@ int _ordinaryReadSDFiles(){
 
 }
 
+
+//Generic Reac Card Function
+
+
+
 ////We've been able to Create and Write to Files but can not tell the program to jump into
 ////Code that will allow it to check for UIDs
 ////Let me know how this code will be structured
