@@ -140,10 +140,10 @@ void WriteMaster() {
     // myFile.print(readCard[3]);
 
       unsigned long UID_unsigned;
-      UID_unsigned =  mfrc522.uid.uidByte[0] << 24;
-      UID_unsigned += mfrc522.uid.uidByte[1] << 16;
-      UID_unsigned += mfrc522.uid.uidByte[2] <<  8;
-      UID_unsigned += mfrc522.uid.uidByte[3];
+      UID_unsigned =  rfid.uid.uidByte[0] << 24;
+      UID_unsigned += rfid.uid.uidByte[1] << 16;
+      UID_unsigned += rfid.uid.uidByte[2] <<  8;
+      UID_unsigned += rfid.uid.uidByte[3];
 
       // Serial.println();
       // Serial.println("UID Unsigned int"); 
@@ -196,10 +196,10 @@ void WriteOrdinary() {
 
 
       unsigned long UID_unsigned;
-      UID_unsigned =  mfrc522.uid.uidByte[0] << 24;
-      UID_unsigned += mfrc522.uid.uidByte[1] << 16;
-      UID_unsigned += mfrc522.uid.uidByte[2] <<  8;
-      UID_unsigned += mfrc522.uid.uidByte[3];
+      UID_unsigned =  rfid.uid.uidByte[0] << 24;
+      UID_unsigned += rfid.uid.uidByte[1] << 16;
+      UID_unsigned += rfid.uid.uidByte[2] <<  8;
+      UID_unsigned += rfid.uid.uidByte[3];
 
         // Serial.println();
         // Serial.println("UID Unsigned int"); 
@@ -298,10 +298,3 @@ void Authorize(){
   //Actuate Relay
 }
 
-<<<<<<< HEAD
-
-////We've been able to Create and Write to Files but can not tell the program to jump into
-////Code that will allow it to check for UIDs
-////Let me know how this code will be structured
-=======
->>>>>>> 205ce5d0873167080d2e386efb95cdc19fbe1b36
