@@ -1,9 +1,14 @@
+
+
 /*
   SD card basic file example
 */
 #include <SPI.h>
 #include <SD.h>
 #include <MFRC522.h>
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+
 
 #define SD_CS 4
 #define RFID_SS 10
@@ -11,9 +16,11 @@
 #define SD_POWER 7
 
 MFRC522 rfid(RFID_SS, RFID_RST);
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 void CommsInit();
-void RFIDInit(); 
+void LCDInit();
+void RFIDInit();
 void CreateFile();
 void ReadUID();
 void WriteMaster(); // Writes UID to Master File in SD card
@@ -24,8 +31,9 @@ File myFile;
 byte readCard[4]; // Array to store UID of a Single Tag temporarily
 
 void setup() {
-  
+
   CommsInit(); // Initializes Serial and SPI communication Protocals
+  LCDInit();
   CreateFile(); // Creates files in SD Card
 
 }
@@ -38,28 +46,29 @@ void CreateFile() {
   pinMode(SD_POWER, OUTPUT);
   digitalWrite(SD_POWER, LOW);
   Serial.println("Initializing SD card...");
-      if (!SD.begin(SD_CS)) {
-                  Serial.println("initialization failed!");
-                  return;
-                            }
-        Serial.println("initialization done.");
-
-      if (!SD.exists("Master.txt")) {
-                  Serial.println("Creating Master.txt...");
-                  myFile = SD.open("Master.txt", FILE_WRITE);
-                  myFile.close();
-                  delay(200);
-                  Serial.println("Master.txt File Created.");
-              }
-      if (!SD.exists("Ordinary.txt")) {
-                  Serial.println("Creating Ordinary.txt...");
-                  myFile = SD.open("Ordinary.txt", FILE_WRITE);
-                  myFile.close();
-                  delay(200);
-                  Serial.println("Ordinary.txt File Created.");
-              }
+  lcd.print("SD card init...");
+  if (!SD.begin(SD_CS)) {
+    Serial.println("initialization failed!");
+    return;
   }
- 
+  Serial.println("initialization done.");
+
+  if (!SD.exists("Master.txt")) {
+    Serial.println("Creating Master.txt...");
+    myFile = SD.open("Master.txt", FILE_WRITE);
+    myFile.close();
+    delay(200);
+    Serial.println("Master.txt File Created.");
+  }
+  if (!SD.exists("Ordinary.txt")) {
+    Serial.println("Creating Ordinary.txt...");
+    myFile = SD.open("Ordinary.txt", FILE_WRITE);
+    myFile.close();
+    delay(200);
+    Serial.println("Ordinary.txt File Created.");
+  }
+}
+
 void RFIDInit() {//Creates an Instance of RFID Object called rfid and initializes it
   //Starting RFID and stopping SD
   digitalWrite(SD_CS, HIGH);
@@ -96,24 +105,24 @@ void ReadUID() {
   Serial.println("");
   IsMaster();
   if (IsMaster) {
-  WriteMaster();
+    WriteMaster();
   } else {
-  WriteOrdinary();
+    WriteOrdinary();
   }
   rfid.PICC_HaltA(); // Stop reading
-  return 1; 
+  return 1;
 }
 void WriteMaster() {
-        pinMode(SD_CS,OUTPUT);
-        digitalWrite(SD_CS, LOW);
-        pinMode(SD_POWER, OUTPUT);
-        digitalWrite(SD_POWER, LOW);
-Serial.println("Initializing SD card...");
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(SD_CS, LOW);
+  pinMode(SD_POWER, OUTPUT);
+  digitalWrite(SD_POWER, LOW);
+  Serial.println("Initializing SD card...");
 
   if (!SD.begin(SD_CS)) {
     SD.begin(SD_CS);
-     Serial.println("initialization done.");
-     }
+    Serial.println("initialization done.");
+  }
   myFile = SD.open("Master.txt", FILE_WRITE);
 
   // if the file opened okay, write to it:
@@ -134,16 +143,16 @@ Serial.println("Initializing SD card...");
 }
 
 void WriteOrdinary() {
-       pinMode(SD_CS,OUTPUT);
-        digitalWrite(SD_CS, LOW);
-        pinMode(SD_POWER, OUTPUT);
-        digitalWrite(SD_POWER, LOW);
-Serial.println("Initializing SD card...");
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(SD_CS, LOW);
+  pinMode(SD_POWER, OUTPUT);
+  digitalWrite(SD_POWER, LOW);
+  Serial.println("Initializing SD card...");
 
   if (!SD.begin(SD_CS)) {
     SD.begin(SD_CS);
-     Serial.println("initialization done.");
-     }
+    Serial.println("initialization done.");
+  }
   myFile = SD.open("Ordinary.txt", FILE_WRITE);
 
   // if the file opened okay, write to it:
@@ -165,4 +174,21 @@ Serial.println("Initializing SD card...");
 boolean IsMaster() {
   //Grep Function here!
 }
+void LCDInit () {
+  lcd.init();                      // initialize the lcd
+  lcd.init();
+  // Print a message to the LCD.
+  lcd.backlight();
+
+  lcd.setCursor(1, 0);
+  lcd.print("Marafique Lift");
+  lcd.setCursor(-1, 1);
+  lcd.print("System  Booting!");
+  lcd.setCursor(-3, 2);
+  lcd.print("Please Wait...");
+  lcd.setCursor(-2, 3);
+  lcd.print("KASP3R TECH!");
+}
+
+
 
