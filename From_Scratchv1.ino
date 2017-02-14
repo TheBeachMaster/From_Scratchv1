@@ -176,6 +176,22 @@ void cardType(){
   //Replaced the Booloean Func with void Func
   //Variables declared are IsMaster and IsOrdinary
 
+//Initialize SD Card 
+      if (!SD.begin(SD_CS_PIN)) 
+      {
+          Serial.println("An Error Ocuured while Initializing SD Card");
+           return;
+      }	
+      	else{
+        //Code Logic ---If the SD Card is not initialized,Exit Code with an Error,else set up files for reading
+       File masterFile = SD.open("Master.txt");
+       File ordinaryFile = SD.open("Ordinary.txt");
+
+       
+      }    
+
+
+
 }
 void LCDInit () {
   lcd.init();                      // initialize the lcd
