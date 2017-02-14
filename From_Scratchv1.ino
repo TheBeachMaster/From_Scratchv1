@@ -184,10 +184,37 @@ void cardType(){
       }	
       	else{
         //Code Logic ---If the SD Card is not initialized,Exit Code with an Error,else set up files for reading
+        //Local Variables only
        File masterFile = SD.open("Master.txt");
        File ordinaryFile = SD.open("Ordinary.txt");
-
        
+       int _UIDAvailable = 0 ;//This variable helps us in identifying how many times a  particular UID item appears on the master file
+      
+       //Open Master File for Reading
+       if(masterFile.available()){
+         String _masterRead = masterFile.read(); //We're assuming we're reading Strings from the Master File 
+
+         for(int i = 0 ; i <_masterRead.length();i++){
+           if(_masterRead.substring(i ,i+1) == ","){
+              _UIDAvailable = _masterRead.lastIndexOf("RFUID");
+           }
+         }
+         if(_UIDAvailable == 1){
+           IsMaster = true;
+         }
+       }else if(ordinaryFile.available()){
+        String _ordinaryRead = ordinaryFile.read();
+
+        for(int i = 0;i<_ordinaryRead.length();i++){
+          if(_ordinaryRead.substring(i,i+1) == ","){ //Use delimiter to find UID Text
+            _UIDAvailable =_ordinaryRead.lastIndexOf("RFID");
+          }
+        }
+        if(_UIDAvailable == 1){
+          IsOrdinary = true;
+        }
+       }
+
       }    
 
 
