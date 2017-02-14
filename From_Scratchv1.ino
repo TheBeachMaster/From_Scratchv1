@@ -109,6 +109,7 @@ void ReadUID() {
   if (IsMaster) {
     WriteMaster();
   } else if(IsOrdinary) {
+    //TO DO Disambiguate
     WriteOrdinary();
   }else{
     //Reject
@@ -239,13 +240,11 @@ void LCDInit () {
   lcd.print("KASP3R TECH!");
 }
 
-
+void Authorize(){
+  //Actuate Relay
+}
 
 <<<<<<< HEAD
-
-//Generic Reac Card Function
-
-
 
 ////We've been able to Create and Write to Files but can not tell the program to jump into
 ////Code that will allow it to check for UIDs
