@@ -235,7 +235,7 @@ void cardType(){
   //Variables declared are IsMaster and IsOrdinary
 
 //Initialize SD Card 
-      if (!SD.begin(SD_CS_PIN)) 
+      if (!SD.begin(SD_CS)) 
       {
           Serial.println("An Error Ocuured while Initializing SD Card");
            return;
