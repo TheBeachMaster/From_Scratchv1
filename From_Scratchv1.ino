@@ -27,7 +27,8 @@ void setup() {
   
   CommsInit(); // Initializes Serial and SPI communication Protocals
   CreateFile(); // Creates files in SD Card
-  }
+
+}
 
 void loop() {
   // nothing happens after setup finishes.
@@ -65,7 +66,6 @@ void RFIDInit() {//Creates an Instance of RFID Object called rfid and initialize
   digitalWrite(SD_POWER, HIGH);
   pinMode(RFID_SS, OUTPUT);
   digitalWrite(RFID_SS, LOW);
-  MFRC522 rfid(RFID_SS, RFID_RST); 
   rfid.PCD_Init();
   rfid.PCD_SetAntennaGain(rfid.RxGain_max);
 }
@@ -79,10 +79,7 @@ void CommsInit() {
 }
 void ReadUID() {
   //Stopping SD Card in readiness for RFID initialization
-//  pinMode(SD_CS, OUTPUT);
-//  digitalWrite(SD_CS, HIGH);
-  pinMode (SD_POWER, OUTPUT);
-  digitalWrite(SD_POWER, HIGH);
+  RFIDInit();
   // Getting ready for Reading Tags/Cards
   if ( ! rfid.PICC_IsNewCardPresent()) { //If a new Access Card is placed to RFID reader continue
     return 0;
@@ -97,35 +94,75 @@ void ReadUID() {
     Serial.print(readCard[i], HEX);
   }
   Serial.println("");
+  IsMaster();
+  if (IsMaster) {
+  WriteMaster();
+  } else {
+  WriteOrdinary();
+  }
   rfid.PICC_HaltA(); // Stop reading
   return 1; 
 }
 void WriteMaster() {
-  pinMode(SD_CS, OUTPUT);
-  digitalWrite(SD_CS, LOW);
-  pinMode(SD_POWER, OUTPUT);
-  digitalWrite(SD_POWER, LOW);
+        pinMode(SD_CS,OUTPUT);
+        digitalWrite(SD_CS, LOW);
+        pinMode(SD_POWER, OUTPUT);
+        digitalWrite(SD_POWER, LOW);
+Serial.println("Initializing SD card...");
+
   if (!SD.begin(SD_CS)) {
     SD.begin(SD_CS);
-    Serial.println("For debugging SD broken link");
+     Serial.println("initialization done.");
+     }
+  myFile = SD.open("Master.txt", FILE_WRITE);
+
+  // if the file opened okay, write to it:
+  if (myFile) {
+    Serial.print("Writing to Master.txt...");
+    myFile.print(readCard[0]);
+    myFile.print(readCard[1]);
+    myFile.print(readCard[2]);
+    myFile.print(readCard[3]);
+    myFile.print(",");
+    // close the file:
+    myFile.close();
+    Serial.println("done.");
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening Master.txt");
   }
-        myFile = SD.open("Master.txt", FILE_WRITE);
-       myFile.print(readCard[0]);
-       myFile.print(readCard[1]);
-       myFile.print(readCard[2]);
-       myFile.print(readCard[3]);
-       myFile.print(",");
-       myFile.close();
-       Serial.println("Writing to Ordinary File done."); 
 }
 
 void WriteOrdinary() {
-       myFile = SD.open("Ordinary.txt", FILE_WRITE);
-       for (uint8_t i=0; i<3; i++) {
-        myFile.print("readCard"[i]);
-       }
-       myFile.print(",");
-       myFile.close();
-       Serial.println("Writing to Ordinary File done."); 
+       pinMode(SD_CS,OUTPUT);
+        digitalWrite(SD_CS, LOW);
+        pinMode(SD_POWER, OUTPUT);
+        digitalWrite(SD_POWER, LOW);
+Serial.println("Initializing SD card...");
+
+  if (!SD.begin(SD_CS)) {
+    SD.begin(SD_CS);
+     Serial.println("initialization done.");
+     }
+  myFile = SD.open("Ordinary.txt", FILE_WRITE);
+
+  // if the file opened okay, write to it:
+  if (myFile) {
+    Serial.print("Writing to Ordinary.txt...");
+    myFile.print(readCard[0]);
+    myFile.print(readCard[1]);
+    myFile.print(readCard[2]);
+    myFile.print(readCard[3]);
+    myFile.print(",");
+    // close the file:
+    myFile.close();
+    Serial.println("done.");
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening Ordinary.txt");
+  }
+}
+boolean IsMaster() {
+  //Grep Function here!
 }
 
