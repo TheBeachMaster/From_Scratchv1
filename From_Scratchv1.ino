@@ -103,12 +103,12 @@ void ReadUID() {
     Serial.print(readCard[i], HEX);
   }
   Serial.println("");
-  IsMaster();
-  if (IsMaster) {
-    WriteMaster();
-  } else {
-    WriteOrdinary();
-  }
+  cardType();
+//  if (IsMaster) {
+//    WriteMaster();
+//  } else {
+//    WriteOrdinary();
+//  }
   rfid.PICC_HaltA(); // Stop reading
   return 1;
 }
@@ -177,13 +177,14 @@ void cardType(){
   //Variables declared are IsMaster and IsOrdinary
 
 //Initialize SD Card 
-      if (!SD.begin(SD_CS_PIN)) 
+      if (!SD.begin(SD_CS)) 
       {
-          Serial.println("An Error Ocuured while Initializing SD Card");
-           return;
+          SD.begin(SD_CS);
+          Serial.println("Initializing SD Card...");
       }	
-      	else{
+      //	else{
         //Code Logic ---If the SD Card is not initialized,Exit Code with an Error,else set up files for reading
+        // Changed logit to --If the SD Card is not ready, instead of exiting. Ran SD initializing code and continue with the rest of the program.
         //Local Variables only
        File masterFile = SD.open("Master.txt");
        File ordinaryFile = SD.open("Ordinary.txt");
@@ -216,10 +217,7 @@ void cardType(){
        }
 
       }    
-
-
-
-}
+//}
 void LCDInit () {
   lcd.init();                      // initialize the lcd
   lcd.init();
