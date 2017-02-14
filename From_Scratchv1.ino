@@ -25,7 +25,8 @@ void CreateFile();
 void ReadUID();
 void WriteMaster(); // Writes UID to Master File in SD card
 void WriteOrdinary(); // Writes UID to Ordinary File in SD card
-boolean IsMaster(); // Returns true if Scanned Tag's UID is found in Master File
+boolean IsMaster =  false; // Returns true if Scanned Tag's UID is found in Master File
+boolean IsOrdinary = false; //Set to true if file is not from Master file
 
 File myFile;
 byte readCard[4]; // Array to store UID of a Single Tag temporarily
@@ -171,8 +172,10 @@ void WriteOrdinary() {
     Serial.println("error opening Ordinary.txt");
   }
 }
-boolean IsMaster() {
-  //Grep Function here!
+void cardType(){  
+  //Replaced the Booloean Func with void Func
+  //Variables declared are IsMaster and IsOrdinary
+
 }
 void LCDInit () {
   lcd.init();                      // initialize the lcd
