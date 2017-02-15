@@ -31,6 +31,8 @@ boolean IsOrdinary = false; //Set to true if file is not from Master file
 File myFile;
 byte readCard[4]; // Array to store UID of a Single Tag temporarily
 
+unsigned long DataBucket; // Temporarily Stores Scanned UID into a single variable
+
 void setup() {
 
   CommsInit(); // Initializes Serial and SPI communication Protocals
@@ -99,21 +101,39 @@ void ReadUID() {
   }
   // Assuming Tags have 4 byte UID, others may have 7 (Reminder)
   Serial.println(F("Scanned Access Tag Unique ID:"));
+
   for (int i = 0; i < 4; i++) {
     readCard[i] = rfid.uid.uidByte[i];
     Serial.print(readCard[i], HEX);
+
   }
+
+
+  DataBucket = rfid.uid.uidByte[0] << 24;
+  DataBucket += rfid.uid.uidByte[1] << 16;
+  DataBucket += rfid.uid.uidByte[2] << 8;
+  DataBucket += rfid.uid.uidByte[3];
+
+  //long _DataBucket = (long)DataBucket;
+
+
   Serial.println("");
+  Serial.println("******************************");
+  Serial.println(DataBucket);
+  Serial.println("******************************");
+
+
+  WriteMaster();
   //Invoke CardType Func to check the Access CardType
-  cardType();
-  if (IsMaster) {
-    WriteMaster();
-  } else if(IsOrdinary) {
-    //TO DO Disambiguate
-    WriteOrdinary();
-  }else{
-    //Reject
-  }
+  // cardType();
+  //  if (IsMaster) {
+  //    WriteMaster();
+  //  } else if(IsOrdinary) {
+  //    //TO DO Disambiguate
+  //    WriteOrdinary();
+  //  }else{
+  //    //Reject
+  //  }
   rfid.PICC_HaltA(); // Stop reading
   return 1;
 }
@@ -134,35 +154,21 @@ void WriteMaster() {
   if (myFile) {
     Serial.print("Writing to Master.txt...");
 
-    // myFile.print(readCard[0]);
-    // myFile.print(readCard[1]);
-    // myFile.print(readCard[2]);
-    // myFile.print(readCard[3]);
+    //     myFile.print(readCard[0]);
+    //     myFile.print(readCard[1]);
+    //     myFile.print(readCard[2]);
+    //     myFile.print(readCard[3]);
 
-      unsigned long UID_unsigned;
-      UID_unsigned =  rfid.uid.uidByte[0] << 24;
-      UID_unsigned += rfid.uid.uidByte[1] << 16;
-      UID_unsigned += rfid.uid.uidByte[2] <<  8;
-      UID_unsigned += rfid.uid.uidByte[3];
+    DataBucket = rfid.uid.uidByte[0] << 24;
+    DataBucket += rfid.uid.uidByte[1] << 16;
+    DataBucket += rfid.uid.uidByte[2] << 8;
+    DataBucket += rfid.uid.uidByte[3];
 
-      // Serial.println();
-      // Serial.println("UID Unsigned int"); 
-      // Serial.println(UID_unsigned);
-
-      String UID_string =  (String)UID_unsigned;
-      long UID_LONG=(long)UID_unsigned;
-
-      // Serial.println("UID Long :");
-      // Serial.println(UID_LONG);
-
-      // Serial.println("UID String :");
-      // Serial.println(UID_string);
-
-      myFile.print(UID_string);
-
+    myFile.print(DataBucket);
     myFile.print(",");
     // close the file:
     myFile.close();
+    GrepMaster();
     Serial.println("done.");
   } else {
     // if the file didn't open, print an error:
@@ -188,38 +194,17 @@ void WriteOrdinary() {
     Serial.print("Writing to Ordinary.txt...");
 
     /*
-    We can use thios code to store the variable we want to write to SD Card
+      We can use thios code to store the variable we want to write to SD Card
 
-    This will generate a String which will be dumped in to the Text file and later on used
-    to perform a search query
+      This will generate a String which will be dumped in to the Text file and later on used
+      to perform a search query
     */
 
 
-      unsigned long UID_unsigned;
-      UID_unsigned =  rfid.uid.uidByte[0] << 24;
-      UID_unsigned += rfid.uid.uidByte[1] << 16;
-      UID_unsigned += rfid.uid.uidByte[2] <<  8;
-      UID_unsigned += rfid.uid.uidByte[3];
-
-        // Serial.println();
-        // Serial.println("UID Unsigned int"); 
-        // Serial.println(UID_unsigned);
-
-      String UID_string =  (String)UID_unsigned;
-      long UID_LONG=(long)UID_unsigned;
-
-      // Serial.println("UID Long :");
-      // Serial.println(UID_LONG);
-
-      // Serial.println("UID String :");
-      // Serial.println(UID_string);    
-
-    // myFile.print(readCard[0]);
-    // myFile.print(readCard[1]);
-    // myFile.print(readCard[2]);
-    // myFile.print(readCard[3]);
-
-    myFile.print(UID_string);//Prints the UID Card in String Format
+    myFile.print(readCard[0]);
+    myFile.print(readCard[1]);
+    myFile.print(readCard[2]);
+    myFile.print(readCard[3]);
 
     myFile.print(",");
     // close the file:
@@ -229,54 +214,6 @@ void WriteOrdinary() {
     // if the file didn't open, print an error:
     Serial.println("error opening Ordinary.txt");
   }
-}
-void cardType(){  
-  //Replaced the Booloean Func with void Func
-  //Variables declared are IsMaster and IsOrdinary
-
-//Initialize SD Card 
-      if (!SD.begin(SD_CS)) 
-      {
-          Serial.println("An Error Ocuured while Initializing SD Card");
-           return;
-      }	
-      	else{
-        //Code Logic ---If the SD Card is not initialized,Exit Code with an Error,else set up files for reading
-        //Local Variables only
-       File masterFile = SD.open("Master.txt");
-       File ordinaryFile = SD.open("Ordinary.txt");
-       
-       int _UIDAvailable = 0 ;//This variable helps us in identifying how many times a  particular UID item appears on the master file
-      
-       //Open Master File for Reading
-       if(masterFile.available()){
-         String _masterRead = masterFile.read(); //We're assuming we're reading Strings from the Master File 
-
-         for(int i = 0 ; i <_masterRead.length();i++){
-           if(_masterRead.substring(i ,i+1) == ","){
-              _UIDAvailable = _masterRead.lastIndexOf(UID_string);
-           }
-         }
-         if(_UIDAvailable != -1){
-           IsMaster = true;
-         }
-       }else if(ordinaryFile.available()){
-        String _ordinaryRead = ordinaryFile.read();
-
-        for(int i = 0;i<_ordinaryRead.length();i++){
-          if(_ordinaryRead.substring(i,i+1) == ","){ //Use delimiter to find UID Text
-            _UIDAvailable =_ordinaryRead.lastIndexOf(UID_string);
-          }
-        }
-        if(_UIDAvailable == 1){
-          IsOrdinary = true;
-        }
-       }
-
-      }    
-
-
-
 }
 void LCDInit () {
   lcd.init();                      // initialize the lcd
@@ -294,7 +231,47 @@ void LCDInit () {
   lcd.print("KASP3R TECH!");
 }
 
-void Authorize(){
-  //Actuate Relay
+
+void GrepMaster() {
+
+  uint16_t RFArray[] = {DataBucket};
+  //uint16_t RFArray[]={12454};
+
+  uint16_t SDArray[] = {myFile.read()};
+  //uint16_t SDArray[]={1,3,54,6,54,2,12454};
+
+  uint16_t SDval;
+  uint16_t RFval;
+  //**************************
+  uint16_t CoachBuffer;
+
+  for (uint8_t i = 0; i < sizeof(SDArray); i++) {
+
+    while (SDArray[i] != ",") {
+
+      CoachBuffer = SDArray[i];
+      continue;
+    }
+    Serial.print(CoachBuffer);
+  }
+
+
+  //**************************
+  RFval = RFArray[0];
+  for (uint8_t i = 0; i < sizeof(SDArray); i++) {
+    SDval = SDArray[i];
+    if (RFval != SDval) {
+      Serial.println("Another Function");
+      return 0;
+    }
+    else
+    {
+      ;
+    }
+  }
 }
+
+  void Authorize() {
+    //Actuate Relay
+  }
 
