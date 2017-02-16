@@ -267,7 +267,7 @@ void GrepMaster() {
   boolean CheckMatch() {
   int bufferposition =0;
   File myFile;
-  uint8_t buffer_size = 8;
+  uint16_t buffer_size = 8;//uint8_t buffer_size = 8;
   char Buffer[buffer_size];
   boolean SDfound =1;
   String buffer;
