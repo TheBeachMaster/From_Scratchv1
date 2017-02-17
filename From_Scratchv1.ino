@@ -32,7 +32,7 @@ File myFile;
 byte readCard[4]; // Array to store UID of a Single Tag temporarily
 
 unsigned long DataBucket; // Temporarily Stores Scanned UID into a single variable
-uint16_t CoachBuffer;
+String boss;
 
 
 void setup() {
@@ -46,7 +46,8 @@ void setup() {
 void loop() {
   // nothing happens after setup finishes.
   ReadUID();
-  CheckMatch();
+  //CheckMatch();
+  
 }
 void CreateFile() {
   pinMode(SD_POWER, OUTPUT);
@@ -110,35 +111,17 @@ void ReadUID() {
     Serial.print(readCard[i], HEX);
 
   }
-
-
-  DataBucket = rfid.uid.uidByte[0] << 24;
-  DataBucket += rfid.uid.uidByte[1] << 16;
-  DataBucket += rfid.uid.uidByte[2] << 8;
-  DataBucket += rfid.uid.uidByte[3];
-
-  //long _DataBucket = (long)DataBucket;
-
-
-  Serial.println("");
-  Serial.println("******************************");
-  Serial.println(DataBucket);
-  Serial.println("******************************");
-
-
-  WriteMaster();
-  //Invoke CardType Func to check the Access CardType
-  // cardType();
-  //  if (IsMaster) {
-  //    WriteMaster();
-  //  } else if(IsOrdinary) {
-  //    //TO DO Disambiguate
-  //    WriteOrdinary();
-  //  }else{
-  //    //Reject
-  //  }
-  rfid.PICC_HaltA(); // Stop reading
-  return DataBucket;
+  
+      DataBucket = rfid.uid.uidByte[0] ;
+      DataBucket += rfid.uid.uidByte[1] ;
+      DataBucket += rfid.uid.uidByte[2] ;
+      DataBucket += rfid.uid.uidByte[3];
+      Serial.println("");
+      Serial.println("******************************");
+ CheckMatch();
+      Serial.println("******************************");
+      rfid.PICC_HaltA(); // Stop reading
+  return 1;
 }
 void WriteMaster() {
   pinMode(SD_CS, OUTPUT);
@@ -171,7 +154,6 @@ void WriteMaster() {
     myFile.print(",");
     // close the file:
     myFile.close();
-    GrepMaster();
     Serial.println("done.");
   } else {
     // if the file didn't open, print an error:
@@ -233,52 +215,11 @@ void LCDInit () {
   lcd.setCursor(-2, 3);
   lcd.print("KASP3R TECH!");
 }
-
-
-void GrepMaster() {
-
-  uint16_t RFArray[] = {DataBucket};
-  uint16_t SDArray[] = {myFile.read()};
-  
-  uint16_t SDval;
-  uint16_t RFval;
-  //**************************
-  uint16_t CoachBuffer;
-
-  for (uint8_t i = 0; i < sizeof(SDArray); i++) {
-    while (SDArray[i] != ",") {
-      CoachBuffer = SDArray[i];
-      continue;
-    }
-    Serial.print(CoachBuffer);
-  }
-
-
-  //**************************
-  RFval = RFArray[0];
-  for (uint8_t i = 0; i < sizeof(SDArray); i++) {
-    SDval = SDArray[i];
-    if (RFval != SDval) {
-      Serial.println("Another Function");
-      return 0;
-    }
-    else
-    {
-      ;
-    }
-  }
-}
-
-  void Authorize() {
+void Authorize() {
     //Actuate Relay
   }
-  void CheckMatch() { // changed from boolean
-  int bufferposition =0;
-  File myFile;
-  uint16_t buffer_size = 8;//uint8_t buffer_size = 8;
-  char Buffer[buffer_size];
-  boolean SDfound =1;
-  String buffer;
+void CheckMatch() { // changed from boolean
+
   pinMode (7, OUTPUT);
   digitalWrite(7, LOW);
   myFile = SD.open("Master.txt");
@@ -287,15 +228,18 @@ void GrepMaster() {
     Serial.print("The text file cannot be opened");
     while(1);
   }
-
+ 
   while (myFile.available()) {
-    buffer = myFile.readStringUntil(',');
-    if (buffer != DataBucket) { //if (buffer == *&readfile) {
-    Serial.println("Match");
-    }
-    else {
-    Serial.println("No Match");
-    }
+    boss = myFile.readStringUntil(',');
+            if (boss == *(unsigned long*)DataBucket) { //if (buffer == *&readfile) {
+            Serial.println("That's a Master Tag");
+            break;
+            }
+            else {
+            myFile.close();
+            Serial.println("No Master Tag");
+            break;
+            }
   }
 
   myFile.close();
