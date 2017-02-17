@@ -281,39 +281,36 @@ void GlobalCheck(){
 
   }
 
-  if(SD.open("Master.txt",FILE_READ)){
-        Databoss = SD.open("Master.txt").readStringUntil(',');
+  if(SD.open("Master.txt",FILE_READ)){  
+        myFile = SD.open("Master.txt");
+        Databoss = myFile.readStringUntil(',');
             if (Databoss == *(unsigned long*)DataBucket) { //if (buffer == *&readfile) {
             Serial.println("That's a Master Tag");
             IsMaster = true;
-            break;
+            myFile.close();
             }
             else {
-              
             Serial.println("No Master Tag");
-            SD.close("Master.txt");
-            break;
+            myFile.close();
             }
             
-      SD.close("Master.txt");
+      myFile.close();
   
   }else if(SD.open("Ordinary.txt",FILE_READ)){
-        Databoss = SD.open("Oridary.txt").readStringUntil(',');
+    
+        myFile = SD.open("Ordinary.txt");
+        Databoss = myFile.readStringUntil(',');
             if (Databoss == *(unsigned long*)DataBucket) { //if (buffer == *&readfile) {
             Serial.println("That's an Ordinary Tag");
             IsOrdinary = true;
-            break;
+            myFile.close();
             }
             else {
-              
             Serial.println("No Ordinary Tag");
-            SD.close("Ordinary.txt");
-            break;
+            myFile.close();
             }
             
-      SD.close("Master.txt");
-
-
+      myFile.close();
 
   }else{
     Serial.println("We had a problem identifying your tag");
