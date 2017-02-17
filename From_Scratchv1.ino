@@ -32,6 +32,8 @@ File myFile;
 byte readCard[4]; // Array to store UID of a Single Tag temporarily
 
 unsigned long DataBucket; // Temporarily Stores Scanned UID into a single variable
+uint16_t CoachBuffer;
+
 
 void setup() {
 
@@ -44,6 +46,7 @@ void setup() {
 void loop() {
   // nothing happens after setup finishes.
   ReadUID();
+  CheckMatch();
 }
 void CreateFile() {
   pinMode(SD_POWER, OUTPUT);
@@ -135,7 +138,7 @@ void ReadUID() {
   //    //Reject
   //  }
   rfid.PICC_HaltA(); // Stop reading
-  return 1;
+  return DataBucket;
 }
 void WriteMaster() {
   pinMode(SD_CS, OUTPUT);
@@ -235,20 +238,15 @@ void LCDInit () {
 void GrepMaster() {
 
   uint16_t RFArray[] = {DataBucket};
-  //uint16_t RFArray[]={12454};
-
   uint16_t SDArray[] = {myFile.read()};
-  //uint16_t SDArray[]={1,3,54,6,54,2,12454};
-
+  
   uint16_t SDval;
   uint16_t RFval;
   //**************************
   uint16_t CoachBuffer;
 
   for (uint8_t i = 0; i < sizeof(SDArray); i++) {
-
     while (SDArray[i] != ",") {
-
       CoachBuffer = SDArray[i];
       continue;
     }
@@ -274,4 +272,32 @@ void GrepMaster() {
   void Authorize() {
     //Actuate Relay
   }
+  void CheckMatch() { // changed from boolean
+  int bufferposition =0;
+  File myFile;
+  uint16_t buffer_size = 8;//uint8_t buffer_size = 8;
+  char Buffer[buffer_size];
+  boolean SDfound =1;
+  String buffer;
+  pinMode (7, OUTPUT);
+  digitalWrite(7, LOW);
+  myFile = SD.open("Master.txt");
+
+  if (!myFile) {
+    Serial.print("The text file cannot be opened");
+    while(1);
+  }
+
+  while (myFile.available()) {
+    buffer = myFile.readStringUntil(',');
+    if (buffer != DataBucket) { //if (buffer == *&readfile) {
+    Serial.println("Match");
+    }
+    else {
+    Serial.println("No Match");
+    }
+  }
+
+  myFile.close();
+}
 
