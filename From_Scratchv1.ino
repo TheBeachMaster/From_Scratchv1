@@ -33,18 +33,15 @@ void SD_Enable();
 void SD_Disable();
 
 File myFile;
-<<<<<<< HEAD
 byte readCard[7]; // Array to store UID of a Single Tag temporarily
 char SD_buffer[10];
 char card_buffer[10];
 char write_buffer[10];
 uint8_t _match=0; // Flag for checking if there was a hit
-=======
 byte readCard[4]; // Array to store UID of a Single Tag temporarily
 
 unsigned long DataBucket; // Temporarily Stores Scanned UID into a single variable
 String Databoss;
->>>>>>> 2ce0f5bce798e2bf5d9fed7c88535b3967353f86
 
 char DataBucket[] ={}; // Temporarily Stores Scanned UID into a single variable
 
@@ -250,13 +247,10 @@ void WriteOrdinary() {
       to perform a search query
     */
 
-
-<<<<<<< HEAD
     myFile.print(readCard[0], HEX);
     myFile.print(readCard[1], HEX);
     myFile.print(readCard[2], HEX);
     myFile.print(readCard[3], HEX);
-=======
     // myFile.print(readCard[0]);
     // myFile.print(readCard[1]);
     // myFile.print(readCard[2]);
@@ -269,7 +263,6 @@ void WriteOrdinary() {
 
     myFile.print(DataBucket);
     myFile.print(",");
->>>>>>> 2ce0f5bce798e2bf5d9fed7c88535b3967353f86
 
     myFile.print(",");
     // close the file:
@@ -357,7 +350,6 @@ void CheckMaster() { // changed from boolean
 //  myFile.close();
 //  }
  
-<<<<<<< HEAD
 //}}
 void CheckOrdinary(){
 //  pinMode (7, OUTPUT);
@@ -383,7 +375,6 @@ void SD_Disable() {
 void SD_Enable() {
   digitalWrite(SD_POWER, LOW);
   digitalWrite(SD_CS, LOW);
-=======
   while (myFile.available()) {
     Databoss = myFile.readStringUntil(',');
             if (Databoss == *(unsigned long*)DataBucket) { //if (buffer == *&readfile) {
@@ -398,7 +389,6 @@ void SD_Enable() {
   }
 
   myFile.close();
->>>>>>> 2ce0f5bce798e2bf5d9fed7c88535b3967353f86
 }
 
 void GlobalCheck(){
