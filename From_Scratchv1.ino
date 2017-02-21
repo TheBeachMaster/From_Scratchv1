@@ -33,11 +33,18 @@ void SD_Enable();
 void SD_Disable();
 
 File myFile;
+<<<<<<< HEAD
 byte readCard[7]; // Array to store UID of a Single Tag temporarily
 char SD_buffer[10];
 char card_buffer[10];
 char write_buffer[10];
 uint8_t _match=0; // Flag for checking if there was a hit
+=======
+byte readCard[4]; // Array to store UID of a Single Tag temporarily
+
+unsigned long DataBucket; // Temporarily Stores Scanned UID into a single variable
+String Databoss;
+>>>>>>> 2ce0f5bce798e2bf5d9fed7c88535b3967353f86
 
 char DataBucket[] ={}; // Temporarily Stores Scanned UID into a single variable
 
@@ -244,10 +251,25 @@ void WriteOrdinary() {
     */
 
 
+<<<<<<< HEAD
     myFile.print(readCard[0], HEX);
     myFile.print(readCard[1], HEX);
     myFile.print(readCard[2], HEX);
     myFile.print(readCard[3], HEX);
+=======
+    // myFile.print(readCard[0]);
+    // myFile.print(readCard[1]);
+    // myFile.print(readCard[2]);
+    // myFile.print(readCard[3]);
+
+    DataBucket = rfid.uid.uidByte[0] << 24;
+    DataBucket += rfid.uid.uidByte[1] << 16;
+    DataBucket += rfid.uid.uidByte[2] << 8;
+    DataBucket += rfid.uid.uidByte[3];
+
+    myFile.print(DataBucket);
+    myFile.print(",");
+>>>>>>> 2ce0f5bce798e2bf5d9fed7c88535b3967353f86
 
     myFile.print(",");
     // close the file:
@@ -335,6 +357,7 @@ void CheckMaster() { // changed from boolean
 //  myFile.close();
 //  }
  
+<<<<<<< HEAD
 //}}
 void CheckOrdinary(){
 //  pinMode (7, OUTPUT);
@@ -360,5 +383,85 @@ void SD_Disable() {
 void SD_Enable() {
   digitalWrite(SD_POWER, LOW);
   digitalWrite(SD_CS, LOW);
+=======
+  while (myFile.available()) {
+    Databoss = myFile.readStringUntil(',');
+            if (Databoss == *(unsigned long*)DataBucket) { //if (buffer == *&readfile) {
+            Serial.println("That's a Master Tag");
+            break;
+            }
+            else {
+            myFile.close();
+            Serial.println("No Master Tag");
+            break;
+            }
+  }
+
+  myFile.close();
+>>>>>>> 2ce0f5bce798e2bf5d9fed7c88535b3967353f86
+}
+
+void GlobalCheck(){
+  /*
+  This Code Checks for UIDs in both the Master and Ordinary Files
+
+  /////////////////////Variables///////////
+
+  The Variables being used are:
+  1. IsMaster
+  2. IsOrdinary
+  3. myFile //Not Used
+  4. DataBucket
+  5. Databoss
+
+  ///////Usage////////////////
+  This code can be used immediately after reading tags and replace the CheckMatch() Func above
+  
+
+  */
+
+  
+  pinMode (7, OUTPUT);
+  digitalWrite(7, LOW);
+
+  if(!SD.exists("Master.txt") && !SD.exists("Ordinary.txt")){
+    Serial.println("We encountered a problem setting data storage");
+
+  }
+
+  if(SD.open("Master.txt",FILE_READ)){  
+        myFile = SD.open("Master.txt");
+        Databoss = myFile.readStringUntil(',');
+            if (Databoss == *(unsigned long*)DataBucket) { //if (buffer == *&readfile) {
+            Serial.println("That's a Master Tag");
+            IsMaster = true;
+            myFile.close();
+            }
+            else {
+            Serial.println("No Master Tag");
+            myFile.close();
+            }
+            
+      myFile.close();
+  
+  }else if(SD.open("Ordinary.txt",FILE_READ)){
+    
+        myFile = SD.open("Ordinary.txt");
+        Databoss = myFile.readStringUntil(',');
+            if (Databoss == *(unsigned long*)DataBucket) { //if (buffer == *&readfile) {
+            Serial.println("That's an Ordinary Tag");
+            IsOrdinary = true;
+            myFile.close();
+            }
+            else {
+            Serial.println("No Ordinary Tag");
+            myFile.close();
+            }
+            
+      myFile.close();
+
+  }else{
+    Serial.println("We had a problem identifying your tag");
+  }
 }
 
