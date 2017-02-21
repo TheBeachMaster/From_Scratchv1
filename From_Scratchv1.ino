@@ -118,7 +118,7 @@ void ReadUID() {
       DataBucket += rfid.uid.uidByte[3];
       Serial.println("");
       Serial.println("******************************");
- CheckMatch();
+ CheckMatch();  /////Invoke GlobalCheck()
       Serial.println("******************************");
       rfid.PICC_HaltA(); // Stop reading
   return 1;
@@ -262,7 +262,7 @@ void GlobalCheck(){
   The Variables being used are:
   1. IsMaster
   2. IsOrdinary
-  3. myFile //Not Used
+  3. myFile 
   4. DataBucket
   5. Databoss
 
@@ -300,7 +300,7 @@ void GlobalCheck(){
     
         myFile = SD.open("Ordinary.txt");
         Databoss = myFile.readStringUntil(',');
-            if (Databoss == *(unsigned long*)DataBucket) { //if (buffer == *&readfile) {
+            if (Databoss == *(unsigned long*)DataBucket) { 
             Serial.println("That's an Ordinary Tag");
             IsOrdinary = true;
             myFile.close();
