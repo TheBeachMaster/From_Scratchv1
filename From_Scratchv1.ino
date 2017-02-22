@@ -14,9 +14,14 @@
 #define RFID_SS 10
 #define RFID_RST 9
 #define SD_POWER 7
+#define Relay 2
+#define LED_Red 3
+#define LED_Amber 5
+#define LED_Green 6
+
 
 MFRC522 rfid(RFID_SS, RFID_RST);
-LiquidCrystal_I2C lcd(0x27, 20, 4);
+LiquidCrystal_I2C lcd(0x27, 16, 4);
 
 void CommsInit();
 void LCDInit();
@@ -33,6 +38,8 @@ void programMode();
 void accessMode();
 void grantAccess();
 void denyAccess();
+void pinSetup();
+void deleteOrdinary();
 
 File myFile;
 byte readCard[7]; // Array to store UID of a Single Tag temporarily
@@ -40,8 +47,8 @@ char SD_buffer[10];
 char card_buffer[10];
 char write_buffer[10];
 uint8_t _match=0; // Flag for checking if there was a match
-boolean _isMaster =  false; // Returns true if Scanned Tag's UID is found in Master File
-//boolean _isOrdinary = false; //Set to true if file is not from Master file
+boolean _isMaster =  false; // Set to true if file is found in Master.txt
+boolean _isOrdinary = false; //Set to true if file is found in Ordinary.txt
 
 char DataBucket[] ={}; // Temporarily Stores Scanned UID into a single variable
 char ch="";
@@ -54,29 +61,27 @@ void setup() {
 }
 void loop() {
   //ReadUID();
-  //CheckMaster();
-  //WriteMaster();
-
+  CheckMaster();
   //____________main loop_________________________
-  if (_isMaster) {
-    Serial.println ("Master Tag Swiped");
-    programMode();
-  }
-  else if (!_isMaster){
-    Serial.println ("Ordinary Tag Swiped");
-    accessMode ();
-  } else {
-    Serial.println ("Unknown Tag!");
-  }
-
-
-  //______________________________________________
+//  if (_isMaster) {
+//    Serial.println ("Master Tag Swiped");
+//    programMode();
+//  }
+//  else if (!_isMaster){
+//    Serial.println ("Ordinary Tag Swiped");
+//    accessMode ();
+//  } else {
+//    Serial.println ("Unknown Tag!");
+//  }
+//______________________________________________
 }
 void CreateFile() {
   pinMode(SD_POWER, OUTPUT);
   digitalWrite(SD_POWER, LOW);
   Serial.println("Initializing SD card...");
-  lcd.print("SD card init...");
+//  lcd.clear();
+//  lcd.setCursor(-2,1);
+//  lcd.print("SD card init...");
   if (!SD.begin(SD_CS)) {
     Serial.println("initialization failed!");
     return;
@@ -239,24 +244,32 @@ void WriteOrdinary() {
     Serial.println("error opening Ordinary.txt");
   }
 }
-void LCDInit () {
+void LCDInit() {
   lcd.init();                      // initialize the lcd
   lcd.init();
   // Print a message to the LCD.
   lcd.backlight();
-
+  lcd.clear();
   lcd.setCursor(1, 0);
-  lcd.print("Marafique Lift");
+  lcd.print("MARAFIQUE LIFT");
   lcd.setCursor(-1, 1);
-  lcd.print("System  Booting!");
+  lcd.print("System Bootiing!");
   lcd.setCursor(-3, 2);
-  lcd.print("Please Wait...");
+  lcd.print("Please wait...");
   lcd.setCursor(-2, 3);
   lcd.print("KASP3R TECH!");
+  delay(3000);
+  lcd.clear();
+  lcd.setCursor(1, 0);
+  lcd.print("MARAFIQUE LIFT");
+  lcd.setCursor(-1, 1);
+  lcd.print("Please Place Tag");
+  lcd.setCursor(-3, 2);
+  lcd.print("to call Lift...");
+  lcd.setCursor(-2, 3);
+  
+  
 }
-void Authorize() {
-    //Actuate Relay
-  }
 void CheckMaster() { // changed from boolean
   RFIDInit();
   SD_Disable();
@@ -291,17 +304,47 @@ void CheckMaster() { // changed from boolean
     rfid.PICC_HaltA(); // Stop reading
    // return 1;
       
+//    digitalWrite(RFID_SS, HIGH);
     SD_Enable();
       myFile = SD.open("Master.txt");
   if (myFile) {
+    Serial.println("test.txt:");
+
+    // read from the file until there's nothing else in it:
+    uint8_t i=0;
+    while (myFile.available()) {
+      char ch = myFile.read();
+      Serial.print(ch);
+      if (ch == ','){
+        i=0;
+        if (strstr(SD_buffer, card_buffer)>0){
+          Serial.println("Match Found");
+          _match = 1;
+          break;
+        } 
+      } else {
+        SD_buffer[i] = ch;
+        i++;
+      }
+    }
+    if (!_match) {
+      Serial.println("Get a lyf...!!!!!");
+    }
+    // close the file:
+    myFile.close();
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening test.txt");
+  }
+  /*if (myFile) {
     Serial.println("*****************");
     Serial.println("Master.txt:");
     //Serial.println(myFile.read());
     // read from the file until there's nothing else in it:
     uint8_t i=0;
     while (myFile.available()) {
-    //  char ch = myFile.read();
-      Serial.print(myFile.read());
+      ch = myFile.read();
+      Serial.write(ch);
       if (ch == ','){
         i=0;
         if (strstr(SD_buffer, card_buffer)>0){
@@ -322,15 +365,22 @@ void CheckMaster() { // changed from boolean
   } else {
     // if the file didn't open, print an error:
     Serial.println("error opening master.txt");
-  }
+  }*/
    Serial.print(ch, HEX);
 }
 void accessMode(){ // Default Mode: constantly checks if the tag is available in Ordinary.txt file in SD
   
 }
-void programMode(){ // Constantly checks if swiped tag is saved in Master.txt and allow for deletion and addition of new tags
-  
-}
+//void programMode(){ // Allows for deletion and addition of new tags
+//  
+//     if (_isOrdinary) {
+//      // delete from SD
+//      // LCD: feedback tag has been removed
+//     } else {
+//      // add tag in SD
+//      // LCD: feedback tag has been added then prompt for next tag.
+//     }
+//}
 void CheckOrdinary(){
 //  pinMode (7, OUTPUT);
 //  digitalWrite(7, LOW);
@@ -358,9 +408,39 @@ void SD_Enable() {
   digitalWrite(SD_CS,LOW);
 }
 void grantAccess () { // Actuates Relay, Displays feedback on LCD and LED to show access has been granted
-  
+  digitalWrite(Relay, HIGH);
+  digitalWrite(LED_Red, LOW);
+  digitalWrite(LED_Amber, LOW);
+  digitalWrite(LED_Green, HIGH);
 }
 void denyAccess () { // Actuates Relay, Displays feedback on LCD and LED to show access has been denied
+  digitalWrite(Relay, LOW);
+  digitalWrite(LED_Red, HIGH);
+  digitalWrite(LED_Amber, LOW);
+  digitalWrite(LED_Green, LOW);
+}
+void pinSetup(){
+  pinMode(Relay, OUTPUT);
+  pinMode(LED_Red, OUTPUT);
+  pinMode(LED_Amber, OUTPUT);
+  pinMode(LED_Green, OUTPUT);
+}
+void programMode(){
+  digitalWrite(Relay, LOW);
+  digitalWrite(LED_Red, HIGH);
+  digitalWrite(LED_Amber, HIGH);
+  digitalWrite(LED_Green, LOW);
+  
+  while (_isMaster){
+    if (_isMaster/*there was Ordinary match*/) {
+      deleteOrdinary();
+    } else {
+       WriteOrdinary();
+    }
+  }
+  _isMaster == false; // write false to Master flag to return to exit program mode with every deletion or addition of a new tag
+}
+void deleteOrdinary(){// Deletes tag in or
   
 }
 
