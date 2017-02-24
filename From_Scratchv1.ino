@@ -30,8 +30,8 @@ void CreateFile();
 void ReadUID();
 void WriteMaster(); // Writes UID to Master File in SD card
 void WriteOrdinary(); // Writes UID to Ordinary File in SD card
-void CheckOrdinary();
-int CheckMaster();
+uint8_t CheckOrdinary();
+uint8_t CheckMaster();
 void SD_Enable();
 void SD_Disable();
 void programMode();
@@ -40,16 +40,20 @@ void grantAccess();
 void denyAccess();
 void pinSetup();
 void deleteOrdinary();
-void read_SD();
+void readMaster_SD();
+void readOrdinary_SD();
+uint8_t tagSwiped();
 
 File myFile;
 byte readCard[7]; // Array to store UID of a Single Tag temporarily
 char SD_buffer[10];
 char card_buffer[10];
 char write_buffer[10];
-uint8_t _match = 0; // Flag for checking if there was a match
+char _match = 0; // Flag for checking if there was a match
 boolean _isMaster =  false; // Set to true if file is found in Master.txt
 boolean _isOrdinary = false; //Set to true if file is found in Ordinary.txt
+char _tagSwiped=0;
+char _progswipe = 0;
 
 char DataBucket[] = {}; // Temporarily Stores Scanned UID into a single variable
 char ch;
@@ -61,21 +65,20 @@ void setup() {
   CreateFile(); // Creates files in SD Card
 }
 void loop() {
-  //ReadUID();
-  CheckMaster();
-  //read_SD();
-  //____________main loop_________________________
-  //  if (_isMaster) {
-  //    Serial.println ("Master Tag Swiped");
-  //    programMode();
-  //  }
-  //  else if (!_isMaster){
-  //    Serial.println ("Ordinary Tag Swiped");
-  //    accessMode ();
-  //  } else {
-  //    Serial.println ("Unknown Tag!");
-  //  }
-  //______________________________________________
+  tagSwiped();
+  while(_tagSwiped == 1){
+    Serial.print("swiped");
+  if(_tagSwiped == 1) CheckMaster();
+  if(_isMaster == false) CheckOrdinary();
+    if (_isMaster == true) {
+      Serial.println ("Master Tag Swiped");
+      programMode();
+    }
+    else{
+      Serial.println ("Ordinary Tag Swiped");
+      accessMode();
+    } 
+  }
 }
 void CreateFile() {
   pinMode(SD_POWER, OUTPUT);
@@ -281,50 +284,24 @@ void RFID_disable() {
   pinMode(RFID_SS, INPUT);
   digitalWrite(RFID_SS, HIGH);
 }
-int CheckMaster() { // changed from boolean
-  //SD_Enable();
-
-  //  if (!SD.begin(4)) {
-  //    Serial.println("initialization failed!");
-  //    return;
-  //  }
-  //  Serial.println("initialization done.");
-  RFIDInit();
+uint8_t CheckMaster() { // changed from boolean
   SD_Disable();
-
-
-  // Getting ready for Reading Tags/Cards
-//  while(1){
-//    if( !rfid.PICC_IsNewCardPresent()) {
-//      CheckMaster();
-//      
-//    }
-//    else break;
-//  }
-
+  RFIDInit();
   if ( !rfid.PICC_IsNewCardPresent()) {
-    //Serial.println("No card");
-    return 0; //If a new Access Card is placed to RFID reader continue
+      return 0; //If a new Access Card is placed to RFID reader continue
   }
   if ( !rfid.PICC_ReadCardSerial()) {
-    //Serial.println("Not read");
-    return 0; //Since a Tag is placed, get Serial and continue
+      return 0; //Since a Tag is placed, get Serial and continue
   }
   //RFID_disable();
   SPI.begin();
-  pinMode (7, OUTPUT);
-  digitalWrite(7, LOW);
+  pinMode (SD_POWER, OUTPUT);
+  digitalWrite(SD_POWER, LOW);
   Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
 
-
- 
-
-  // Assuming Tags have 4 byte UID, others may have 7 (Reminder)
-  //Serial.println(F("Scanned Access Tag Unique ID:"));
- 
   for (int i = 0; i < 4; i++) {
     readCard[i] = rfid.uid.uidByte[i];
 
@@ -346,62 +323,23 @@ int CheckMaster() { // changed from boolean
     card_buffer[k] = lowerChar[0];
     card_buffer[j] = upperChar[0];
   }
-  Serial.print("card buffer");
+  Serial.println("card buffer");
   Serial.println(card_buffer);
   rfid.PICC_HaltA(); // Stop reading
-  // return 1;
-  Serial.print("Initializing SD card...");
-
-  if (!SD.begin(4)) {
-    Serial.println("initialization failed!");
-    //return;
+  if (!SD.begin(SD_CS)) { // Necessary to debug printing junk
   }
   Serial.println("initialization done.");
-    SD_Enable();
-   Serial.println("read 1: ");
-  read_SD();
+  SD_Enable();
+  readMaster_SD();
   Serial.println("///////////////////////////////////////////////////");
-  //    digitalWrite(RFID_SS, HIGH);
-
-  /*if (myFile) {
-    Serial.println("*****************");
-    Serial.println("Master.txt:");
-    //Serial.println(myFile.read());
-    // read from the file until there's nothing else in it:
-    uint8_t i=0;
-    while (myFile.available()) {
-      ch = myFile.read();
-      Serial.write(ch);
-      if (ch == ','){
-        i=0;
-        if (strstr(SD_buffer, card_buffer)>0){
-          Serial.println("Match Found");
-          _match = 1;
-          break;
-        }
-      } else {
-        SD_buffer[i] = ch;
-        i++;
-      }
-    }
-    if (!_match) {
-      Serial.println("Get a lyf...!!!!!");
-    }
-    // close the file:
-    myFile.close();
-    } else {
-    // if the file didn't open, print an error:
-    Serial.println("error opening master.txt");
-    }*/
-  //Serial.print(ch, HEX);
+ 
 }
-
-void read_SD() {
+void readMaster_SD() {
   Serial.println();
+  
   SD_Enable();
   RFID_disable();
   delay(1000);
-  //SD_Enable();
   Serial.println("opening file from SD");
   myFile = SD.open("Master.txt");
   if (myFile) {
@@ -410,46 +348,60 @@ void read_SD() {
     // read from the file until there's nothing else in it:
     uint8_t i = 0;
     while (myFile.available()) {
-      //Serial.println("In file now");
-      //delay(200);
-      //Serial.write(myFile.read());
       char ch = myFile.read();
-      Serial.print(ch);
-      //delay(500);
-      if (ch == ',') {
-        Serial.println();
-        Serial.print("SD_buffer: ");
-        Serial.println(SD_buffer);
-        Serial.print("Card_buffer: ");
-        Serial.println(card_buffer);
-        i = 0;
-        if (strstr(SD_buffer, card_buffer) > 0) {
-          Serial.println("Match Found");
-          _match = 1;
-          break;
-        }
-      } else {
-        SD_buffer[i] = ch;
-        i++;
+      Serial.println(ch);
+          if (ch == ',') {
+              i=0;
+               if (strstr(SD_buffer, card_buffer) > 0) {
+               Serial.println("Match Found in Master");
+                _match=1;
+                _isMaster=true;
+               }
+               else _match=0;
+               } else {
+                SD_buffer[i]=ch;
+                i++;
+               
       }
     }
-    Serial.println();
-    Serial.println(SD_buffer);
     if (!_match) {
-      Serial.println("Get a lyf...!!!!!");
+      Serial.println("Match Not Found");
     }
-    // close the file:
     myFile.close();
   } else {
     // if the file didn't open, print an error:
-    Serial.println("error opening test.txt");
+    Serial.println("error opening TEST.txt");
   }
 }
 void accessMode() { // Default Mode: constantly checks if the tag is available in Ordinary.txt file in SD
-
+ _tagSwiped=0;
+ if (_isOrdinary==true){
+  Serial.println("Access Granted");
+ } else {
+  Serial.println("Access Denied");
+ }
 }
-//void programMode(){ // Allows for deletion and addition of new tags
-//
+void programMode(){ // Allows for deletion and addition of new tags
+_progswipe=1;
+
+while(_progswipe==1){
+if(rfid.PICC_IsNewCardPresent()){
+  CheckMaster();
+  if(_match == 1){
+    _tagSwiped = 0;
+    _isMaster=false;
+    _progswipe=0;
+    Serial.println("Exiting Program Mode");
+  } else {
+    // code for adding and deleting UID
+  }
+}
+}
+
+delay(5000);
+Serial.print("Hey Boss");
+_tagSwiped = 0;
+_isMaster=false;
 //     if (_isOrdinary) {
 //      // delete from SD
 //      // LCD: feedback tag has been removed
@@ -457,32 +409,78 @@ void accessMode() { // Default Mode: constantly checks if the tag is available i
 //      // add tag in SD
 //      // LCD: feedback tag has been added then prompt for next tag.
 //     }
-//}
-void CheckOrdinary() {
-  //  pinMode (7, OUTPUT);
-  //  digitalWrite(7, LOW);
-  //           myFile = SD.open("Ordinary.txt");
-  //           while (myFile.available()&&(IsMaster==false)){
-  //            boss = myFile.readStringUntil(',');
-  //             if (boss == *(unsigned long*)DataBucket,HEX) {
-  //              Serial.println("Ordinary Tag");
-  //              break;
-  //             }
-  //             else {
-  //              Serial.println("Unknown Tag");
-  //              break;
-  //             }
-  //              myFile.close();
-  //      }
+}
+uint8_t tagSwiped(){
+  RFIDInit();
+  SD_Disable();
+  //Serial.print("yyyyy");
+  if (rfid.PICC_IsNewCardPresent()) {
+       _tagSwiped = 1;
+       //Serial.print("XXXXXX");
+      return 0; //If a new Access Card is placed to RFID reader continue
+  }
+}
+uint8_t CheckOrdinary() { // changed from boolean
+  SD_Disable();
+  RFIDInit();
+  if ( !rfid.PICC_IsNewCardPresent()) {
+      return 0; //If a new Access Card is placed to RFID reader continue
+  }
+  if ( !rfid.PICC_ReadCardSerial()) {
+      return 0; //Since a Tag is placed, get Serial and continue
+  }
+  //RFID_disable();
+  SPI.begin();
+  pinMode (SD_POWER, OUTPUT);
+  digitalWrite(SD_POWER, LOW);
+  Serial.begin(9600);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+
+  for (int i = 0; i < 4; i++) {
+    readCard[i] = rfid.uid.uidByte[i];
+
+    // Operation on lower byte to enable ID in a nibble rather than a byte
+    byte lowerByte = (readCard[i] & 0x0F);
+    int lowerInt = (int) lowerByte; //converting byte into int
+    char lowerChar[1];
+    itoa(lowerInt, lowerChar, 16);
+    byte upperByte = (readCard[i] >> 4);
+    int upperInt = (int) upperByte;
+
+    // Operation on upper byte to enable ID in a nibble rather than a byte
+    char upperChar[1];
+    itoa(upperInt, upperChar, 16);
+    int j = i * 2;
+    int k = j + 1;
+
+    // Storing UID in char array (card_buffer)
+    card_buffer[k] = lowerChar[0];
+    card_buffer[j] = upperChar[0];
+  }
+  Serial.println("card buffer");
+  Serial.println(card_buffer);
+  rfid.PICC_HaltA(); // Stop reading
+  if (!SD.begin(SD_CS)) { // Necessary to debug printing junk
+  }
+  Serial.println("initialization done.");
+  SD_Enable();
+  readOrdinary_SD();
+  Serial.println("///////////////////////////////////////////////////");
+ 
 }
 void SD_Disable() {
   digitalWrite(SD_POWER, HIGH);
   digitalWrite(SD_CS, HIGH);
 }
 void SD_Enable() {
-
   digitalWrite(SD_POWER, LOW);
   digitalWrite(SD_CS, LOW);
+  if (!SD.begin(SD_CS)) {
+    Serial.println("initialization failed!");
+    return;
+  }
 }
 void grantAccess () { // Actuates Relay, Displays feedback on LCD and LED to show access has been granted
   digitalWrite(Relay, HIGH);
@@ -502,22 +500,59 @@ void pinSetup() {
   pinMode(LED_Amber, OUTPUT);
   pinMode(LED_Green, OUTPUT);
 }
-void programMode() {
-  digitalWrite(Relay, LOW);
-  digitalWrite(LED_Red, HIGH);
-  digitalWrite(LED_Amber, HIGH);
-  digitalWrite(LED_Green, LOW);
-
-  while (_isMaster) {
-    if (_isMaster/*there was Ordinary match*/) {
-      deleteOrdinary();
-    } else {
-      WriteOrdinary();
-    }
-  }
-  _isMaster == false; // write false to Master flag to return to exit program mode with every deletion or addition of a new tag
-}
+//void programMode() {
+//  digitalWrite(Relay, LOW);
+//  digitalWrite(LED_Red, HIGH);
+//  digitalWrite(LED_Amber, HIGH);
+//  digitalWrite(LED_Green, LOW);
+//
+//  while (_isMaster) {
+//    if (_isMaster/*there was Ordinary match*/) {
+//      deleteOrdinary();
+//    } else {
+//      WriteOrdinary();
+//    }
+//  }
+//  _isMaster == false; // write false to Master flag to return to exit program mode with every deletion or addition of a new tag
+//}
 void deleteOrdinary() { // Deletes tag in ordinary.txt file
 
 }
+void readOrdinary_SD() {
+  Serial.println();
+  SD_Enable();
+  RFID_disable();
+  delay(1000);
+  //SD_Enable();
+  Serial.println("opening file from SD");
+  myFile = SD.open("Ordinary.txt");
+  if (myFile) {
+    Serial.println("Ordinary.txt:");
 
+    // read from the file until there's nothing else in it:
+    uint8_t i = 0;
+    while (myFile.available()) {
+      char ch = myFile.read();
+          if (ch == ',') {
+              i = 0;
+               if (strstr(SD_buffer, card_buffer) > 0) {
+               Serial.println("Match Found in Ordinary");
+                _match = 1;
+                _isOrdinary = true;
+                break;
+               }
+               } else {
+                SD_buffer[i] = ch;
+                i++;
+               
+      }
+    }
+    if (!_match) {
+      Serial.println("Match Not Found");
+    }
+    myFile.close();
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening test.txt");
+  }
+}
