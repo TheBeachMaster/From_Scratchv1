@@ -233,7 +233,7 @@ void WriteOrdinary() {
 }
 void LCDInit() {
   lcd.init();                      // initialize the lcd
-  lcd.init();
+  //lcd.init();
   // Print a message to the LCD.
   lcd.backlight();
   lcd.clear();
@@ -323,65 +323,37 @@ void readMaster_SD() {
               i=0;
                if (strstr(SD_buffer, card_buffer) > 0) {
                 Serial.println("Match Found in Master");
-                Serial.println("********************************************************");
+              
                 _match=1;
                 _isMaster=1;
-//                toggling progFlag 
+//**********************************toggling progFlag****************************** 
                  if (progFlag==0){
                   progFlag=1;}
                 else if (progFlag==1){
                   progFlag=0;}
-                Serial.println("Entering Program Mode");
-//********************************************************************************************//
-// Copying card buffer to master buffer
-   for (int i = 0; i < 4; i++) {
-    readCard[i] = rfid.uid.uidByte[i];
 
-    // Operation on lower byte to enable ID in a nibble rather than a byte
-    byte lowerByte = (readCard[i] & 0x0F);
-    int lowerInt = (int) lowerByte; //converting byte into int
-    char lowerChar[1];
-    itoa(lowerInt, lowerChar, 16);
-    byte upperByte = (readCard[i] >> 4);
-    int upperInt = (int) upperByte;
-
-    // Operation on upper byte to enable ID in a nibble rather than a byte
-    char upperChar[1];
-    itoa(upperInt, upperChar, 16);
-    int j = i * 2;
-    int k = j + 1;
-
-    // Storing UID in char array (card_buffer)
-    master_buffer[k] = lowerChar[0];
-    master_buffer[j] = upperChar[0];
-  }
-   Serial.print("master buffer:");
-   Serial.println(master_buffer);
-   rfid.PICC_HaltA();
-// while progCount == 1, check if card buffer== master buffer. if not, readOrdinary and do the necessary
-
-if (progFlag==1){
-//  if(card_buffer != master_buffer){
-    Serial.println("programming now...");
-  }else {
-    progFlag=0;
-    Serial.println("Exiting progMode now...");
-//  }
-}
+                if (progFlag==1){
+                    Serial.println("programming now...");
+                    programMode(); //for LCD feedback
+//ran readOrdinary to check if swiped tag is in SD
+                   // readOrdinary_SD();
+                    return;
+                  }else {
+                    progFlag=0;
+                    Serial.println("Exiting progMode now...");
+                    return;
+                }
 //********************************************************************************************//                
-               // programMode();
                }
                else _match=0;
                } else {
                 SD_buffer[i]=ch;
-                i++;
-               
+                i++;        
       }
     }
     if (!_match) {
       Serial.println("");
       Serial.println("Match Not Found");
-      Serial.println("********************************************************");
       readOrdinary_SD();
       return;
     }
@@ -392,51 +364,25 @@ if (progFlag==1){
   }
  // SD_Disable();
 }
-void programMode(){ // Allows for deletion and addition of new tags
-  uint8_t progCount=0;
-  if (progCount==0){
-  for (int i = 0; i < 4; i++) {
-    readCard[i] = rfid.uid.uidByte[i];
-
-    // Operation on lower byte to enable ID in a nibble rather than a byte
-    byte lowerByte = (readCard[i] & 0x0F);
-    int lowerInt = (int) lowerByte; //converting byte into int
-    char lowerChar[1];
-    itoa(lowerInt, lowerChar, 16);
-    byte upperByte = (readCard[i] >> 4);
-    int upperInt = (int) upperByte;
-
-    // Operation on upper byte to enable ID in a nibble rather than a byte
-    char upperChar[1];
-    itoa(upperInt, upperChar, 16);
-    int j = i * 2;
-    int k = j + 1;
-
-    // Storing UID in char array (card_buffer)
-    master_buffer[k] = lowerChar[0];
-    master_buffer[j] = upperChar[0];
-  }
-   Serial.print("master buffer:");
-   Serial.println(master_buffer);
-   rfid.PICC_HaltA();
-  }
-  if (master_buffer);
-      progCount++;
-   while (progCount<2){
-  if (strstr(SD_buffer, master_buffer)>0) {
-      //readOrdinary();
-      Serial.println("Checking for match");
-    if (!_match){ 
-      //writeOrdinary();
-      Serial.println("No Match, writing to ordinary file");
-      } else {
-       //deleteOrdinary();
-       Serial.println("Found Match, deleting from ordinary file");
-      }
-    }
-   // break out of while loop
-   }
-   Serial.println("Exiting prog Mode");
+void programMode(){ // LCD feedback
+ lcd.init();
+  lcd.clear();
+  lcd.setCursor(1, 0);
+  lcd.print("MARAFIQUE LIFT");
+  lcd.setCursor(-1, 1);
+  lcd.print("Program Mode");
+  lcd.setCursor(-3, 2);
+  lcd.print("Please Wait...");
+  lcd.setCursor(-2, 3);
+   delay(10000);
+  lcd.clear();
+  lcd.setCursor(1, 0);
+  lcd.print("MARAFIQUE LIFT");
+  lcd.setCursor(-1, 1);
+  lcd.print("Please Place Tag");
+  lcd.setCursor(-3, 2);
+  lcd.print("to program...");
+  lcd.setCursor(-2, 3);
 }
 void tagSwiped(){
   if (rfid.PICC_IsNewCardPresent()) {
@@ -511,22 +457,46 @@ void grantAccess () { // Actuates Relay, Displays feedback on LCD and LED to sho
   digitalWrite(LED_Red, LOW);
   digitalWrite(LED_Amber, LOW);
   digitalWrite(LED_Green, HIGH);
-//  lcd.init();
-//  lcd.init();
-//  lcd.setCursor(1, 0);
-//  lcd.print("MARAFIQUE LIFT");
-//  lcd.setCursor(-1, 1);
-//  lcd.print("Access Granted!");
-//  lcd.setCursor(-3, 2);
-//  lcd.print("Please wait...");
-//  lcd.setCursor(-2, 3);
-//  lcd.print("for Lift.");
+
+ // SD_Disable();
+  lcd.init();
+  lcd.clear();
+  lcd.setCursor(1, 0);
+  lcd.print("MARAFIQUE LIFT");
+  lcd.setCursor(-1, 1);
+  lcd.print("Access Granted");
+  lcd.setCursor(-3, 2);
+  lcd.print("Please Wait...");
+  lcd.setCursor(-2, 3);
+   delay(10000);
+  lcd.clear();
+  lcd.setCursor(1, 0);
+  lcd.print("MARAFIQUE LIFT");
+  lcd.setCursor(-1, 1);
+  lcd.print("Please Place Tag");
+  lcd.setCursor(-3, 2);
+  lcd.print("to call Lift...");
+  lcd.setCursor(-2, 3);
+  //SD_Enable();
 }
 void denyAccess () { // Actuates Relay, Displays feedback on LCD and LED to show access has been denied
   digitalWrite(Relay, LOW);
   digitalWrite(LED_Red, HIGH);
   digitalWrite(LED_Amber, LOW);
   digitalWrite(LED_Green, LOW);
+  
+  //SD_Disable();
+  //lcd.init();
+//  lcd.clear();
+//  lcd.setCursor(1, 0);
+//  lcd.print("MARAFIQUE LIFT");
+//  lcd.setCursor(1, 1);
+//  lcd.print("Access Denied");
+//  lcd.setCursor(-4, 2);
+//  lcd.print("Residents Only..");
+//  lcd.setCursor(-2, 3);
+  //SD_Enable();
+
 }
 void pinSetup() {
   pinMode(Relay, OUTPUT);
@@ -538,6 +508,7 @@ void deleteOrdinary() { // Deletes tag in ordinary.txt file
 
 }
 void readOrdinary_SD() {
+  lcd.init();
   myFile.close();
    if (!myFile) {
   SD_Enable();
@@ -562,6 +533,18 @@ void readOrdinary_SD() {
                 _isMaster=false;
                  Serial.println("Grant Access");
                  grantAccess();
+//                  SD_Disable();
+//                  delay(500);
+//                  lcd.init();
+//                  lcd.clear();
+//                  lcd.setCursor(1, 0);
+//                  lcd.print("MARAFIQUE LIFT");
+//                  lcd.setCursor(-1, 1);
+//                  lcd.print("Access Granted");
+//                  lcd.setCursor(-3, 2);
+//                  lcd.print("Please Wait...");
+//                  lcd.setCursor(-2, 3);
+//                  SD_Enable();
                  return;
                }
                else _match=0;
