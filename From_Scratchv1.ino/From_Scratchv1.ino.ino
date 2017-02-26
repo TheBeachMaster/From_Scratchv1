@@ -35,8 +35,8 @@ void CreateFile();
 void ReadUID();
 void WriteMaster(); // Writes UID to Master File in SD card
 void WriteOrdinary(); // Writes UID to Ordinary File in SD card
-uint8_t CheckOrdinary();
-uint8_t CheckMaster();
+void CheckOrdinary();
+void CheckMaster();
 void SD_Enable();
 void SD_Disable();
 void programMode();
@@ -46,7 +46,7 @@ void pinSetup();
 void deleteOrdinary();
 void readMaster_SD();
 void readOrdinary_SD();
-uint8_t tagSwiped();
+void tagSwiped();
 
 File myFile;
 byte readCard[7]; // Array to store UID of a Single Tag temporarily
@@ -67,11 +67,9 @@ void setup() {
   LCDInit();
   RFIDInit();
   CreateFile(); // Creates files in SD Card
- 
 }
 void loop() {
-//CheckMaster();
-  CheckOrdinary();
+  CheckMaster();
 //programMode();
 }
 void CreateFile() {
@@ -268,7 +266,7 @@ void RFID_disable() {
   pinMode(RFID_SS, INPUT);
   digitalWrite(RFID_SS, HIGH);
 }
-uint8_t CheckMaster() { // changed from boolean
+void CheckMaster() { // changed from boolean
   SD_Disable();
  // RFIDInit();
   //digitalWrite(RFID_SS, LOW);
@@ -282,9 +280,9 @@ uint8_t CheckMaster() { // changed from boolean
   RFID_disable();
   pinMode (SD_POWER, OUTPUT);
   digitalWrite(SD_POWER, LOW);
-//  while (!Serial) {
-//    ; // wait for serial port to connect. Needed for native USB port only
-//  }
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
 
   for (int i = 0; i < 4; i++) {
     readCard[i] = rfid.uid.uidByte[i];
@@ -314,11 +312,11 @@ uint8_t CheckMaster() { // changed from boolean
   readMaster_SD();
 }
 void readMaster_SD() {
-  
+  if (!myFile) {
   SD_Enable();
   //RFID_disable();
   Serial.println("opening file from SD");
-  myFile = SD.open("Master.txt");
+  myFile = SD.open("Master.txt");}
   if (myFile) {
     Serial.println("Master.txt:");
 
@@ -379,7 +377,7 @@ return;
 }
 }
 }
-uint8_t tagSwiped(){
+void tagSwiped(){
   RFIDInit();
   SD_Disable();
   //Serial.print("yyyyy");
@@ -388,7 +386,7 @@ uint8_t tagSwiped(){
       return 0; //If a new Access Card is placed to RFID reader continue
   }
 }
-uint8_t CheckOrdinary() { // changed from boolean
+void CheckOrdinary() { // changed from boolean
   SD_Disable();
   RFIDInit();
   if ( !rfid.PICC_IsNewCardPresent()) {
@@ -472,10 +470,12 @@ void deleteOrdinary() { // Deletes tag in ordinary.txt file
 
 }
 void readOrdinary_SD() {
+  myFile.close();
+   if (!myFile) {
   SD_Enable();
   //RFID_disable();
   Serial.println("opening file from SD");
-  myFile = SD.open("Ordinary.txt");
+  myFile = SD.open("Ordinary.txt");}
   if (myFile) {
     Serial.println("Ordinary.txt:");
 
