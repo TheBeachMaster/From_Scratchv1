@@ -52,12 +52,14 @@ File myFile;
 byte readCard[7]; // Array to store UID of a Single Tag temporarily
 char SD_buffer[10];
 char card_buffer[10];
+char master_buffer[10];
 char write_buffer[10];
 char _match = 0; // Flag for checking if there was a match
 bool _isMaster; // Set to true if file is found in Master.txt
 bool _isOrdinary; //Set to true if file is found in Ordinary.txt
 char _tagSwiped=0;
 char _progswipe = 0;
+uint8_t progFlag = 0;
 
 char DataBucket[] = {}; // Temporarily Stores Scanned UID into a single variable
 char ch;
@@ -71,6 +73,7 @@ void setup() {
 void loop() {
    CheckMaster();
 // programMode();
+//  readMaster_SD();
 }
 void CreateFile() {
   pinMode(SD_POWER, OUTPUT);
@@ -213,15 +216,7 @@ void WriteOrdinary() {
   // if the file opened okay, write to it:
   if (myFile) {
     Serial.print("Writing to Ordinary.txt...");
-
-    /*
-      We can use thios code to store the variable we want to write to SD Card
-
-      This will generate a String which will be dumped in to the Text file and later on used
-      to perform a search query
-    */
-
-
+    
     myFile.print(readCard[0], HEX);
     myFile.print(readCard[1], HEX);
     myFile.print(readCard[2], HEX);
@@ -250,7 +245,7 @@ void LCDInit() {
   lcd.print("Please wait...");
   lcd.setCursor(-2, 3);
   lcd.print("KASP3R TECH!");
-  delay(200);
+  delay(2000);
   lcd.clear();
   lcd.setCursor(1, 0);
   lcd.print("MARAFIQUE LIFT");
@@ -311,10 +306,9 @@ void CheckMaster() { // changed from boolean
   Serial.println("initialization done.");
   readMaster_SD();
 }
-void readMaster_SD() {
+void readMaster_SD() {  
   if (!myFile) {
   SD_Enable();
-  //RFID_disable();
   Serial.println("opening file from SD");
   myFile = SD.open("Master.txt");}
   if (myFile) {
@@ -328,13 +322,54 @@ void readMaster_SD() {
           if (ch == ',') {
               i=0;
                if (strstr(SD_buffer, card_buffer) > 0) {
-                Serial.println("");
                 Serial.println("Match Found in Master");
                 Serial.println("********************************************************");
                 _match=1;
                 _isMaster=1;
+//                toggling progFlag 
+                 if (progFlag==0){
+                  progFlag=1;}
+                else if (progFlag==1){
+                  progFlag=0;}
                 Serial.println("Entering Program Mode");
-                programMode();
+//********************************************************************************************//
+// Copying card buffer to master buffer
+   for (int i = 0; i < 4; i++) {
+    readCard[i] = rfid.uid.uidByte[i];
+
+    // Operation on lower byte to enable ID in a nibble rather than a byte
+    byte lowerByte = (readCard[i] & 0x0F);
+    int lowerInt = (int) lowerByte; //converting byte into int
+    char lowerChar[1];
+    itoa(lowerInt, lowerChar, 16);
+    byte upperByte = (readCard[i] >> 4);
+    int upperInt = (int) upperByte;
+
+    // Operation on upper byte to enable ID in a nibble rather than a byte
+    char upperChar[1];
+    itoa(upperInt, upperChar, 16);
+    int j = i * 2;
+    int k = j + 1;
+
+    // Storing UID in char array (card_buffer)
+    master_buffer[k] = lowerChar[0];
+    master_buffer[j] = upperChar[0];
+  }
+   Serial.print("master buffer:");
+   Serial.println(master_buffer);
+   rfid.PICC_HaltA();
+// while progCount == 1, check if card buffer== master buffer. if not, readOrdinary and do the necessary
+
+if (progFlag==1){
+//  if(card_buffer != master_buffer){
+    Serial.println("programming now...");
+  }else {
+    progFlag=0;
+    Serial.println("Exiting progMode now...");
+//  }
+}
+//********************************************************************************************//                
+               // programMode();
                }
                else _match=0;
                } else {
@@ -358,11 +393,50 @@ void readMaster_SD() {
  // SD_Disable();
 }
 void programMode(){ // Allows for deletion and addition of new tags
-   Serial.println(_isMaster);
-  if (_isMaster) {
-    Serial.println("Entered Prog Mode loop");
+  uint8_t progCount=0;
+  if (progCount==0){
+  for (int i = 0; i < 4; i++) {
+    readCard[i] = rfid.uid.uidByte[i];
+
+    // Operation on lower byte to enable ID in a nibble rather than a byte
+    byte lowerByte = (readCard[i] & 0x0F);
+    int lowerInt = (int) lowerByte; //converting byte into int
+    char lowerChar[1];
+    itoa(lowerInt, lowerChar, 16);
+    byte upperByte = (readCard[i] >> 4);
+    int upperInt = (int) upperByte;
+
+    // Operation on upper byte to enable ID in a nibble rather than a byte
+    char upperChar[1];
+    itoa(upperInt, upperChar, 16);
+    int j = i * 2;
+    int k = j + 1;
+
+    // Storing UID in char array (card_buffer)
+    master_buffer[k] = lowerChar[0];
+    master_buffer[j] = upperChar[0];
   }
-  Serial.println("Exited Prog Loop");
+   Serial.print("master buffer:");
+   Serial.println(master_buffer);
+   rfid.PICC_HaltA();
+  }
+  if (master_buffer);
+      progCount++;
+   while (progCount<2){
+  if (strstr(SD_buffer, master_buffer)>0) {
+      //readOrdinary();
+      Serial.println("Checking for match");
+    if (!_match){ 
+      //writeOrdinary();
+      Serial.println("No Match, writing to ordinary file");
+      } else {
+       //deleteOrdinary();
+       Serial.println("Found Match, deleting from ordinary file");
+      }
+    }
+   // break out of while loop
+   }
+   Serial.println("Exiting prog Mode");
 }
 void tagSwiped(){
   if (rfid.PICC_IsNewCardPresent()) {
@@ -437,6 +511,16 @@ void grantAccess () { // Actuates Relay, Displays feedback on LCD and LED to sho
   digitalWrite(LED_Red, LOW);
   digitalWrite(LED_Amber, LOW);
   digitalWrite(LED_Green, HIGH);
+//  lcd.init();
+//  lcd.init();
+//  lcd.setCursor(1, 0);
+//  lcd.print("MARAFIQUE LIFT");
+//  lcd.setCursor(-1, 1);
+//  lcd.print("Access Granted!");
+//  lcd.setCursor(-3, 2);
+//  lcd.print("Please wait...");
+//  lcd.setCursor(-2, 3);
+//  lcd.print("for Lift.");
 }
 void denyAccess () { // Actuates Relay, Displays feedback on LCD and LED to show access has been denied
   digitalWrite(Relay, LOW);
