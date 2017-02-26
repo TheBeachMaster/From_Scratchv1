@@ -54,8 +54,8 @@ char SD_buffer[10];
 char card_buffer[10];
 char write_buffer[10];
 char _match = 0; // Flag for checking if there was a match
-boolean _isMaster =  false; // Set to true if file is found in Master.txt
-boolean _isOrdinary = false; //Set to true if file is found in Ordinary.txt
+bool _isMaster; // Set to true if file is found in Master.txt
+bool _isOrdinary; //Set to true if file is found in Ordinary.txt
 char _tagSwiped=0;
 char _progswipe = 0;
 
@@ -69,8 +69,8 @@ void setup() {
   CreateFile(); // Creates files in SD Card
 }
 void loop() {
-  CheckMaster();
-//programMode();
+   CheckMaster();
+// programMode();
 }
 void CreateFile() {
   pinMode(SD_POWER, OUTPUT);
@@ -250,7 +250,7 @@ void LCDInit() {
   lcd.print("Please wait...");
   lcd.setCursor(-2, 3);
   lcd.print("KASP3R TECH!");
-  delay(3000);
+  delay(200);
   lcd.clear();
   lcd.setCursor(1, 0);
   lcd.print("MARAFIQUE LIFT");
@@ -332,10 +332,9 @@ void readMaster_SD() {
                 Serial.println("Match Found in Master");
                 Serial.println("********************************************************");
                 _match=1;
-                _isMaster=true;
+                _isMaster=1;
                 Serial.println("Entering Program Mode");
-                // programMode();
-                return;
+                programMode();
                }
                else _match=0;
                } else {
@@ -359,31 +358,16 @@ void readMaster_SD() {
  // SD_Disable();
 }
 void programMode(){ // Allows for deletion and addition of new tags
-  SD_Disable();
-  RFIDInit();
-  if(rfid.PICC_ReadCardSerial()){
-   //_match==1;
- while (_match==1) {
-         CheckMaster();
-          if(_match==1){
-            Serial.println("Exiting Program Mode");
-            return;
-          } else {
-            Serial.println("Adding & Deleting Tag");
-            // code for adding and deleting UID
-            return;
-          }
-return;
-}
-}
+   Serial.println(_isMaster);
+  if (_isMaster) {
+    Serial.println("Entered Prog Mode loop");
+  }
+  Serial.println("Exited Prog Loop");
 }
 void tagSwiped(){
-  RFIDInit();
-  SD_Disable();
-  //Serial.print("yyyyy");
   if (rfid.PICC_IsNewCardPresent()) {
-       _tagSwiped = 1;
-      return 0; //If a new Access Card is placed to RFID reader continue
+       _tagSwiped=1;
+       //If a new Access Card is placed to RFID reader continue
   }
 }
 void CheckOrdinary() { // changed from boolean
