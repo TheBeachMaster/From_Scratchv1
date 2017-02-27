@@ -183,13 +183,6 @@ void WriteMaster() {
   // if the file opened okay, write to it:
   if (myFile) {
     Serial.print("Writing to Master.txt...");
-
-//    myFile.print(readCard[0], HEX);
-//    myFile.print(readCard[1], HEX);
-//    myFile.print(readCard[2], HEX);
-//    myFile.print(readCard[3], HEX);
-
-    ///////////////////////////////////////////
     for (int i = 0; i < 4; i++) {
     
       byte lowerByte = (readCard[i] & 0x0F);
@@ -210,9 +203,6 @@ void WriteMaster() {
 
     Serial.println(write_buffer);
     myFile.print(write_buffer);
-    
-
-    //////////////////////////////////////////
 
     myFile.print(",");
     // close the file:
@@ -241,7 +231,7 @@ void WriteOrdinary() {
     Serial.print("Writing to Ordinary.txt...");
 
     /*
-      We can use thios code to store the variable we want to write to SD Card
+      We can use this code to store the variable we want to write to SD Card
 
       This will generate a String which will be dumped in to the Text file and later on used
       to perform a search query
@@ -251,10 +241,6 @@ void WriteOrdinary() {
     myFile.print(readCard[1], HEX);
     myFile.print(readCard[2], HEX);
     myFile.print(readCard[3], HEX);
-    // myFile.print(readCard[0]);
-    // myFile.print(readCard[1]);
-    // myFile.print(readCard[2]);
-    // myFile.print(readCard[3]);
 
     DataBucket = rfid.uid.uidByte[0] << 24;
     DataBucket += rfid.uid.uidByte[1] << 16;
@@ -331,26 +317,6 @@ void CheckMaster() { // changed from boolean
     myFile.close();
   }
 
-//  while (myFile.available()) {
-//    //boss = myFile.readStringUntil(',');
-//    Serial.write(myFile.read());
-//            if (boss == *(unsigned long*)DataBucket, HEX) {
-//            Serial.println("||||||||||||||||||||||||||||||");
-//            Serial.println(boss);
-//            Serial.println("That's a Master Tag");
-//            Serial.println("||||||||||||||||||||||||||||||||");
-//            IsMaster = true;
-//            break;
-//            }
-//            else {
-//            Serial.println("Not Master");
-//            IsMaster = false;
-//            break;
-//            }
-//  myFile.close();
-//  }
- 
-//}}
 void CheckOrdinary(){
 //  pinMode (7, OUTPUT);
 //  digitalWrite(7, LOW);
